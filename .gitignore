@@ -1,5 +1,5 @@
-# environment files
-.venv/
+# venv/
+venv/
 
 # Logs
 logs

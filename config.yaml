@@ -1,0 +1,13 @@
+# Which network interface to sniff on-> for now, auto
+interface: null
+
+# Sliding window used for counting packets
+window_seconds: 10
+
+# Threshold to trigger ICMP alert within the window_seconds timeframe
+icmp_threshold_per_window: 100
+
+# Log where alerts are written for now
+logging: 
+  alerts_log: alerts.log
+  level: INFO
