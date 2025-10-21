@@ -24,6 +24,14 @@ class PacketCapture:
         bpf = 'icmp'
         # Captures packets in real time 
         sniff(filter = bpf, prn = self.process_packet_in_detector, store = False, iface = self.interface)
+    
+    # Sniff ARP packets specifically --> Anish added this for testing the ARP spoofer (obviously lol)
+    def start_sniff_arp(self):
+        self.running = True
+        bpf = 'arp'
+        # Captures ARP packets in real time
+        print(f"Starting ARP packet capture on interface: {self.interface or 'default'}")
+        sniff(filter = bpf, prn = self.process_packet_in_detector, store = False, iface = self.interface)
 
     # Stop packet capture-- I don't see a need in this for my part but maybe ya'll need it
     def stop_sniff(self):
