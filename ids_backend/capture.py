@@ -12,6 +12,13 @@ class PacketCapture:
 
     # Pass every packet to each detector in store_detectors
     def process_packet_in_detector(self, packet):
+        '''
+        # Debug: print a short summary so we know sniff() is delivering packets
+        try:
+            print("CAPTURED PKT summary:", packet.summary())
+        except Exception:
+            print("CAPTURED PKT (couldn't summary)")
+        '''
         for store_detector in self.store_detectors:
             try:
                 store_detector(packet)
@@ -21,9 +28,13 @@ class PacketCapture:
     # Sniff the packets
     def start_sniff(self):
         self.running = True
-        bpf = 'icmp'
+        #bpf = 'icmp or icmp6' 
+        #print(f"Starting sniff on iface={self.interface}, bpf='{bpf}'")
         # Captures packets in real time 
-        sniff(filter = bpf, prn = self.process_packet_in_detector, store = False, iface = self.interface)
+        try:
+            sniff(prn=self.process_packet_in_detector, store=False, iface=self.interface)
+        except Exception as e:
+            print("Sniff failed:", e)
     
     # Sniff ARP packets specifically --> Anish added this for testing the ARP spoofer (obviously lol)
     def start_sniff_arp(self):

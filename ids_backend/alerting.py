@@ -12,7 +12,7 @@ class alert_manager:
         payload['timestamp'] = time.time()
         try:
             line = json.dumps(payload) # Convert to string in json formatted 
-            print(f'[ALERT] {payload.get("message")}') # This is moreso for debugging but print the alert
+            print(f"[ALERT] {payload.get('message')}") # This is moreso for debugging but print the alert
             
             # Write to the log file
             with open(self.log_file, 'a') as f:

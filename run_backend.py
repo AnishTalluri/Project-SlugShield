@@ -5,6 +5,7 @@ from ids_backend.capture import PacketCapture
 from ids_backend.detectors.icmp_flood import icmp_counter_detector
 from ids_backend.alerting import alert_manager
 
+#newly added
 from ids_backend.ssh_detector import ssh_detector
 
 def main():
@@ -14,7 +15,9 @@ def main():
     live_packet_sniffer = PacketCapture(app_config)
     live_packet_sniffer.add_detection(detector.analyze_packet)
     
+    #newly added
     live_packet_sniffer.add_detection(ssh_detector)
+    
     # Start capture in background thread
     thread = threading.Thread(target=live_packet_sniffer.start_sniff, daemon=True)
     thread.start()
