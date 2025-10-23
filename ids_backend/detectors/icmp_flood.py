@@ -25,7 +25,7 @@ class icmp_counter_detector(centralized_detector):
                 # Not an ICMP packet
                 return
 
-        print(f"Detector received ICMP from {source_ip}")
+        #print(f"Detector received ICMP from {source_ip}")
 
         # The mapping concept from __init__
         dq = self.events[source_ip]

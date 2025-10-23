@@ -5,9 +5,23 @@
     - Download the packages needed for backend: pip install -r requirements.txt
         - Side Note: Some of these packages require the latest python update to run
 
-- Backend logic:
-    - run_backend.py: run the actual backend of the project 
+- ids_backend(Backend logic):
+    - requirements.txt: a txt file that should be ran when creating an environment for this project-- it contains the modules with the version for each of those modules to make this project work
     - ids_backend: The directory where all the backend logic will be stored: parsing, detecting, etc.
         - config.py: Loader and manager of configuration for project-- reads config.yaml and merge with defaults
+        - dectectors: directory that will contain files that detect the icmp flood, arp spoofing, etc. 
+            - icmp_flood.py: ICMP flood detection that utilizes sliding windows-- if the threshold value for number of ICMP packets within another threshold value for sliding window length in seconds is met, then trigger alert 
+                - Detects for both ipv4 and ipv6-- sends the ip address, packet count, and window value to alert 
+        - capture.py: captures the packets using scapy-- note(Andy-- ICMP flooding): im not using bpf just cause it isn't the most reliable in filtering packets: it will take up more cpu usage just cause it's not filtering only for certain packets but will turn it on when deployed in the wild
+        - centralized_detector.py: base class for all specific detectors-- inherit from centralized_detector
+        - alerting.py: add to alerts.log on what was detected along with the timestamp
 
 - config.yaml: user-editable configuration-- you change threshold values and such here 
+- run_backend.py: run the actual backend of the project
+- tools
+    - simulate_icmp_flood.py: sends a range of icmp packets to the detector
+- How to test for:
+    - icmp flood: have two terminals open: for for victim and one for attacker
+        - You can test this locally, just set interface to lo0
+        - On victim's terminal run: sudo -E venv/bin/python3 run_backend.py 
+        - On attacker's terminal run: sudo -E venv/bin/python3 tools/simulate_icmp_flood.py 127.0.0.1 1000
