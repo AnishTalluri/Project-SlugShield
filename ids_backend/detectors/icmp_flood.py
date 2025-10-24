@@ -3,6 +3,7 @@ from collections import defaultdict, deque
 from scapy.layers.inet import IP, ICMP
 from scapy.layers.inet6 import IPv6, ICMPv6EchoRequest, ICMPv6EchoReply
 from ..centralized_detector import centralized_detector
+from ..alerting import broadcaster
 
 class icmp_counter_detector(centralized_detector):
     def __init__(self, app_config, alert_manager):
@@ -10,6 +11,7 @@ class icmp_counter_detector(centralized_detector):
         self.window = float(app_config.window_seconds)
         self.threshold = int(app_config.icmp_threshold_per_window)
         self.events = defaultdict(lambda: deque()) # This is to keep a mapping of each source IP to a deque timestamp of ICMP packet
+        self.last_stat_time = 0 # periodic stat reporting
 
     def analyze_packet(self, packet):
         now = time.time()
@@ -36,13 +38,36 @@ class icmp_counter_detector(centralized_detector):
             dq.popleft()
         count = len(dq)
 
+        # Sends packet rate stats every 1 second for live chart
+        if now - self.last_stat_time >= 1:
+            total_packets = sum(len(v) for v in self.events.values())
+
+            # Sends to broadcaster
+            broadcaster.push_stat({
+                "metric": "icmp_packets_per_second",
+                "timestamp": now,
+                "value": total_packets / self.window,
+            })
+            self.last_stat_time = now
+
         # ICMP flood detected, add to alert
         if count >= self.threshold:
-            self.alert({
+            alert_data = {
                 'detector': 'icmp_flood',
                 'src': source_ip,
                 'count': count,
                 'window_seconds': self.window,
                 'message': f'ICMP flood detected from {source_ip}: {count} packets in {self.window}sec'
+            }
+
+            self.alert(alert_data)
+
+            # Push same alert to broadcaster for dashboard
+            broadcaster.push_alert({
+                "timestamp": now, 
+                "severity": "high",
+                **alert_data
             })
+
             dq.clear()
+

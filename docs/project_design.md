@@ -1,0 +1,23 @@
+- First thing is first, make sure you:
+    - Are in the directory for this project 
+    - Create an environment for testing: python3 -m venv venv
+    - Activate environment: source venv/bin/activate(Please make sure to not push venv onto github-- no need to)
+    - Download the packages needed for backend: pip install -r requirements.txt
+        - Side Note: Some of these packages require the latest python update to run
+
+- config.yaml: user-editable configuration-- you change threshold values and such here 
+- run_backend.py: run the actual backend of the project
+- tools
+    - simulate_icmp_flood.py: sends a range of icmp packets to the detector
+- requirements.txt
+    - scapy: packet capture and network traffic analysis
+    - fastapi: web api backend framework -> exposes data to frontend
+    - uvicorn[standard]: runs the FastAPI backend, [standard] is for performance extra
+    - python-dotenv: stores confirguration values in an environment file
+    - pytest: for automated and integration testing
+    - PyYAML: reading structured .yaml configs
+- How to test for:
+    - icmp flood: have two terminals open: for for victim and one for attacker
+        - You can test this locally, just set interface to lo0
+        - On victim's terminal run: sudo -E venv/bin/python3 run_backend.py 
+        - On attacker's terminal run: sudo -E venv/bin/python3 tools/simulate_icmp_flood.py 127.0.0.1 1000
