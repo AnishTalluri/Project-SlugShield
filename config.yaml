@@ -1,5 +1,7 @@
-# Which network interface to sniff on-> for now, auto
-interface: null
+# Which network interface to sniff on
+# null = auto-detect (recommended for most users)
+# or specify: eth0, wlan0, en0, etc. for specific interface
+interface: eth0  # Temporarily set to eth0 for WSL testing
 
 # Sliding window used for counting packets
 window_seconds: 10
@@ -9,6 +11,9 @@ icmp_threshold_per_window: 100
 
 # Threshold for ARP spoofing detection - how many MAC address changes trigger an alert
 arp_mac_change_threshold: 3
+
+# Threshold for SSH brute force detection - how many connection attempts trigger an alert
+ssh_threshold_per_window: 3
 
 # Log where alerts are written for now
 logging: 

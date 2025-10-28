@@ -8,13 +8,13 @@ Run this (the detector) first --> then the simulate_arp_spoof.py script in anoth
 
 Anish's Note 1: If using WSL (Like Anish is) --> run this cmd in WSL with the venv activated in terminal 1:
 -------------------------------------------------------------------------------------------------------------
-    sudo /mnt/c/Users/HP/CSE115A/Project-SlugShield/venv/bin/python test_arp_detector.py
+    sudo .../Project-SlugShield/venv/bin/python test_arp_detector.py
 -------------------------------------------------------------------------------------------------------------
 It needs sudo to access network interfaces for packet capture.
 
 Anish's Note 2: Once the above is running, open a new terminal --> activate the venv again and run:
 -------------------------------------------------------------------------------------------------------------
-    sudo /mnt/c/Users/HP/CSE115A/Project-SlugShield/venv/bin/python tools/simulate_arp_spoof.py
+    sudo .../Project-SlugShield/venv/bin/python tools/simulate_arp_spoof.py
 -------------------------------------------------------------------------------------------------------------
 This will simulate ARP spoofing packets to trigger the detector (should see an alert triggered on the third
 different MAC for same IP. It will show up in terminal 1, where the detector is running).
@@ -22,7 +22,7 @@ different MAC for same IP. It will show up in terminal 1, where the detector is 
 """
 
 import threading 
-import time 
+import time
 from ids_backend.config import load_config_file
 from ids_backend.capture import PacketCapture
 from ids_backend.arp_detector import arp_spoof_detector
