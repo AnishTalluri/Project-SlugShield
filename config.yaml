@@ -1,5 +1,5 @@
 # Which network interface to sniff on-> for now, auto
-interface: null
+interface: lo0
 
 # Sliding window used for counting packets
 window_seconds: 10

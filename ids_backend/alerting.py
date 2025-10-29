@@ -5,10 +5,11 @@ from collections import deque
 from typing import List, Dict, Any
 
 class alert_broadcaster:
-    def __init__(self, max_alerts_store = 1000, max_stats_stored = 600):
-        self.recent_alerts = deque(maxlen = max_alerts_store) # auto remove oldest alert stored in memory once deque full
+    def __init__(self, loop: asyncio.AbstractEventLoop, max_alerts_store = 1000, max_stats_stored = 600):
+        self.recent_alerts = deque(maxlen = max_alerts_store) # Auto remove oldest alert stored in memory once deque full
         self.recent_stats = deque(maxlen = max_stats_stored) # Same concept as above
-        set.connections = set() # stores all active websocket connections to clients
+        self.connections = set() # Stores all active websocket connections to clients
+        self.loop = loop # Stores main event loop
 
     # Register new websocket connection
     async def register(self, websocket):
@@ -41,14 +42,12 @@ class alert_broadcaster:
     # Store new alert and broadcast to connected clients
     def push_alert(self, alert: Dict[str, Any]):
         self.recent_alerts.append(alert)
-
-        # async broadcast
-        asyncio.create_task(self.broadcast({"type": "alert", "payload": alert}))
+        asyncio.run_coroutine_threadsafe(self.broadcast({"type": "alert", "payload": alert}), self.loop)
 
     # Store new ICMP stat and broadcast to connected clients
     def push_stat(self, stat: Dict[str, Any]):
         self.recent_stats.append(stat)
-        asyncio.create_task(self.broadcast({"type": "stat", "payload": stat}))
+        asyncio.run_coroutine_threadsafe(self.broadcast({"type": "stat", "payload": stat}), self.loop)
 
     # Return newest alerts 
     def get_alerts(self, limit = 100):
@@ -60,5 +59,6 @@ class alert_broadcaster:
 
         # filter for only stats that happened in last 60 seconds and stats of given metric icmp_packets_per_seconds
         return [s for s in self.recent_stats if s["metric"] == metric and s["timestamp"] >= cutoff]
-
-broadcaster = alert_broadcaster()
+    
+loop = asyncio.get_event_loop()
+broadcaster = alert_broadcaster(loop)

@@ -1,11 +1,12 @@
 import threading 
 import time 
 import uvicorn 
+import asyncio 
 
 from ids_backend.config import load_config_file
 from ids_backend.capture import PacketCapture
 from ids_backend.detectors.icmp_flood import icmp_counter_detector
-from ids_backend.alerting import broadcaster
+from ids_backend import alerting
 from ids_backend.api import app
 
 #newly added
@@ -17,23 +18,25 @@ def start_api():
 
 def main():
     app_config = load_config_file()
-    alert_mngr = broadcaster(app_config)
-    detector = icmp_counter_detector(app_config, alert_mngr)
+    loop = asyncio.get_event_loop()
+    alert_mngr = alerting.alert_broadcaster(loop)
+    alerting.broadcaster = alert_mngr 
+    icmp_detector = icmp_counter_detector(app_config, alert_mngr)
     live_packet_sniffer = PacketCapture(app_config)
-    live_packet_sniffer.add_detection(detector.analyze_packet)
+    live_packet_sniffer.add_detection(icmp_detector.analyze_packet)
     
     #newly added
     live_packet_sniffer.add_detection(ssh_detector)
     
     # Start FastAPI in a background thread
     api_thread = threading.Thread(target=start_api, daemon=True)
-    api_thread.start
+    api_thread.start()
     # Start capture in background thread
     thread = threading.Thread(target=live_packet_sniffer.start_sniff, daemon=True)
     thread.start()
 
     print("API: http://127.0.0.1:8080")
-    print("ICMP flood detector is running. Stop program from running with Ctrl+C.\n")
+    print("Detector is running. Stop program from running with Ctrl+C.\n")
     try:
         while True:
             time.sleep(1)

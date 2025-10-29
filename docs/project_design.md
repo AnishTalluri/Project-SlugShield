@@ -16,8 +16,15 @@
     - python-dotenv: stores confirguration values in an environment file
     - pytest: for automated and integration testing
     - PyYAML: reading structured .yaml configs
-- How to test for:
-    - icmp flood: have two terminals open: for for victim and one for attacker
-        - You can test this locally, just set interface to lo0
-        - On victim's terminal run: sudo -E venv/bin/python3 run_backend.py 
-        - On attacker's terminal run: sudo -E venv/bin/python3 tools/simulate_icmp_flood.py 127.0.0.1 1000
+
+- run_backend.py: entry point for IDS backend as well as starting FastAPI server and network packet detector within same event loop-- ensures real time updates flow to frontend via shared broadcaster
+
+- How to start application:
+    - Make sure you are in an environment first and have installed requirements.txt
+    - Go into Project_Slugshild directory and run sudo -E venv/bin/python3 run_backend.py
+    - Then go into ids_frontend directory and run npm run dev (run npm install first if you never ran it before)
+    - Testing for icmp flood:
+        - Set interface in config.yaml to lo0 just so you can test this on same machine
+            - On different terminal run sudo -E venv/bin/python3 tools/simulate_icmp_flood.py 127.0.0.1 1000
+                - 127.0.0.1 represents lo0 ip address
+                - 1000 amount of packets you want to test 

@@ -12,6 +12,7 @@ class icmp_counter_detector(centralized_detector):
         self.threshold = int(app_config.icmp_threshold_per_window)
         self.events = defaultdict(lambda: deque()) # This is to keep a mapping of each source IP to a deque timestamp of ICMP packet
         self.last_stat_time = 0 # periodic stat reporting
+        self.alert_manager = alert_manager
 
     def analyze_packet(self, packet):
         now = time.time()
@@ -27,7 +28,7 @@ class icmp_counter_detector(centralized_detector):
                 # Not an ICMP packet
                 return
 
-        #print(f"Detector received ICMP from {source_ip}")
+        print(f"Detector received ICMP from {source_ip}")
 
         # The mapping concept from __init__
         dq = self.events[source_ip]

@@ -2,4 +2,4 @@
 class centralized_detector:
     def __init__(self, app_config, alert_manager):
         self.app_config = app_config
-        self.alert = alert_manager.alert
+        self.alert = alert_manager.push_alert

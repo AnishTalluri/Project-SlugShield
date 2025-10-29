@@ -1,16 +1,13 @@
 - ids_backend(Backend logic):
-    - requirements.txt: a txt file that should be ran when creating an environment for this project-- it contains the modules with the version for each of those modules to make this project work
-    - ids_backend: The directory where all the backend logic will be stored: parsing, detecting, etc.
-        - config.py: Loader and manager of configuration for project-- reads config.yaml and merge with defaults
-        - dectectors: directory that will contain files that detect the icmp flood, arp spoofing, etc. 
-            - icmp_flood.py: ICMP flood detection that utilizes sliding windows-- if the threshold value for number of ICMP packets within another threshold value for sliding window length in seconds is met, then trigger alert 
-                - Detects for both ipv4 and ipv6-- sends the ip address, packet count, and window value to alert 
-        - capture.py: captures the packets using scapy-- note(Andy-- ICMP flooding): im not using bpf just cause it isn't the most reliable in filtering packets: it will take up more cpu usage just cause it's not filtering only for certain packets but will turn it on when deployed in the wild
-        - centralized_detector.py: base class for all specific detectors-- inherit from centralized_detector
-
-        - alerting.py: add to alerts.log on what was detected along with the timestamp
----
-
+    - config.py: Loader and manager of configuration for project-- reads config.yaml and merge with defaults
+    - dectectors: directory that will contain files that detect the icmp flood, arp spoofing, etc. 
+        - icmp_flood.py: ICMP flood detection that utilizes sliding windows-- if the threshold value for number of ICMP packets within another threshold value for sliding window length in seconds is met, then trigger alert 
+            - Detects for both ipv4 and ipv6-- sends the ip address, packet count, and window value to alert 
+    - capture.py: captures the packets using scapy-- note(Andy-- ICMP flooding): im not using bpf just cause it isn't the most reliable in filtering packets: it will take up more cpu usage just cause it's not filtering only for certain packets but will turn it on when deployed in the wild
+    - centralized_detector.py: base class for all specific detectors-- inherit from centralized_detector
+    - alerting.py: implement alert_broadcaster which stores the alerts and statistics, manages WebSocket clients, and broadcasts updates to dashboard
+    - api.py: defines FastAPI endpoints and websocket routes for dashboard; pulls from detectors using alert_broadcaster to show recent alerts and update live
+    
 ## Detection Modules
 
 ### ARP Spoofing Detector

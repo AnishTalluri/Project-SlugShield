@@ -1,0 +1,104 @@
+/* For body, cards, muted text, and borders across components */
+:root {
+    --bg: #f8fafc;
+    --card: #ffffff;
+    --muted: #6b7280;
+}
+
+/* For entire page */
+body {
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    background: var(--bg);
+    margin: 0;
+    color: #111827;
+}
+
+/* For app.js -> wraps everything into container */
+.container {
+    max-width: 1100px;
+    margin: 18px auto;
+    padding: 16px;
+}
+
+/* For header in app.js */
+header h1 {margin: 0 0 12px 0;}
+
+/* Status Card layout */
+.status-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--card);
+    padding: 12px 16px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(2, 6, 23, 0.06);
+    margin-bottom: 12px;
+}
+.status-left {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+.status-health {
+    color: #fff;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-weight: 700;
+}
+.status-right {
+    text-align: right;
+    color: var(--muted);
+}
+
+/* For main dashboard layout */
+main {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+}
+.left {flex: 2;}
+.right { width: 360px;}
+
+/* For alerts list */
+.alerts-list {
+    background: white;
+    padding: 12px;
+    border-radius: 8px;
+}
+.alert-item {
+    border-bottom: 1px solid #f1f5f9;
+    padding: 8px 0;
+}
+.alert-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+}
+.alert-message {
+    margin-top: 4px;
+    color: var(--muted);
+}
+.alert-meta {
+    margin-top: 6px;
+    font-size: 12px;
+    color: #4b5563;
+    display: flex;
+    gap: 8px;
+}
+.no-alerts {
+    color: var(--muted);
+    padding: 12px;
+}
+
+/* For ICMP chart */
+.chart-card {
+    background: white;
+    padding: 12px;
+    border-radius: 8px;
+}
+
+/* For footer in app.js */
+footer {
+    margin-top: 16px;
+    color: var(--muted);
+}
