@@ -28,3 +28,27 @@ export async function fetch_icmp_stats(interval = 60) {
         return [];
     }
 }
+
+// Create WebSocket connection for real-time alerts and stats
+export function create_alert_socket(callback) {
+    const ws = new WebSocket('ws://127.0.0.1:8080/websocket/alerts');
+    
+    ws.onmessage = (event) => {
+        try {
+            const message = JSON.parse(event.data);
+            callback(message);
+        } catch (e) {
+            console.error('WebSocket message parse error', e);
+        }
+    };
+    
+    ws.onerror = (error) => {
+        console.error('WebSocket error', error);
+    };
+    
+    ws.onclose = () => {
+        console.log('WebSocket connection closed');
+    };
+    
+    return ws;
+}

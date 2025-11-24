@@ -3,6 +3,7 @@ import React, { useState } from "react";
 export default function ThresholdPanel() {
   const [sshValue, setSshValue] = useState("");
   const [icmpValue, setIcmpValue] = useState("");
+  const [arpValue, setArpValue] = useState("");
 
   async function updateThreshold(detector, value) {
     if (!value) return alert("Please enter a value.");
@@ -54,6 +55,22 @@ export default function ThresholdPanel() {
         />
         <button
           onClick={() => updateThreshold("icmp", icmpValue)}
+          style={buttonStyle}
+        >
+          Update
+        </button>
+      </div>
+
+      <div style={rowStyle}>
+        <label style={labelStyle}>ARP Threshold:</label>
+        <input
+          type="number"
+          value={arpValue}
+          onChange={(e) => setArpValue(e.target.value)}
+          style={inputStyle}
+        />
+        <button
+          onClick={() => updateThreshold("arp", arpValue)}
           style={buttonStyle}
         >
           Update
