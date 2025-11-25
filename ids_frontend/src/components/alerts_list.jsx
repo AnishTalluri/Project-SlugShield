@@ -9,8 +9,9 @@ function AlertItem({alert}) {
                 <strong> {alert.detector}</strong>
                 <span className = "time"> {new Date(alert.timestamp * 1000).toLocaleTimeString()}</span>
             </div>
+            {/* Display single alert card here */}
             <div className = "alert-message"> {alert.message}</div>
-            <div className = "alert-meta">
+            <div className = "alert-meta"> 
                 {alert.src && <span>src: {alert.src}</span>}
                 {alert.count !== undefined && <span>count: {alert.count}</span>}
             </div>
@@ -23,7 +24,10 @@ export default function AlertsList({ alerts = []}) {
     return (
         <div className = "alerts-list">
             <h3>Recent Alerts</h3>
+            {/* Initial display */}
             {alerts.length === 0 && <div className = "no-alerts"> No alerts</div>}
+
+            {/* Displays all alert cards*/}
             <div className = "alerts-scroll">
                 {alerts.map((alert) => <AlertItem key={alert.id || alert.timestamp} alert={alert} />)}
             </div>

@@ -1,48 +1,34 @@
-<<<<<<< HEAD
-// Renders live icmp traffic chart
-import React from 'react';
-
-// For charting
-import {LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer} from 'recharts';
-
-export default function IcmpChart ({stats = [], baseline = []}) {
-    // Merge to chart points and attach baseline to points if possible
-    const points = stats.map(s => ({time: new Date(s.timestamp * 1000).toLocaleTimeString(), value: s.value}));
-    const baselineMap = new Map(baseline.map(b => [new Date(b.timestamp * 1000).toLocaleTimeString(), b.value]));
-    const data = points.map(p => ({ ...p, baseline: baselineMap.get(p.time) ?? null}));
-
-    return (
-        <div className = "chart-card">
-            <h3>ICMP Packets / s</h3>
-            <ResponsiveContainer width = "100%" height = {240}>
-                <LineChart data = {data}>
-                    <CartesianGrid stroke = "#f5f5f5" />
-                    <XAxis dataKey = "time" minTickGap = {20} />
-                    <YAxis />
-                    <Tooltip />
-                    <Line type = "monotone" dataKey = "value" stroke = "#8884d8" dot = {false} strokeWidth = {2} />
-                    <Line type = "monotone" dataKey = "baseline" stroke = "#82ca9d" dot = {false} strokeDasharray = "5 5" />
-=======
-// Renders live ICMP traffic chart
 import React from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from 'recharts';
 
+function convert_unix_timestamp_to_local_time_string(timestamp) {
+    if (!timestamp) {
+        return "Unknown";
+    }
+    return new Date(timestamp * 1000).toLocaleTimeString();
+}
+
 export default function IcmpChart({ stats = [], baseline = [] }) {
-    // Filter stats for ICMP packets only
+    // Filter stats for ICMP metrics only
     const icmpStats = stats.filter(s => s.metric === "icmp_packets_per_second");
 
-    // Map to chart points
-    const points = icmpStats.map(s => ({
-        time: new Date(s.timestamp * 1000).toLocaleTimeString(),
+    // Pre-format all timestamps one time before polluting to chart
+    const points_list = icmpStats.map(s => ({
+        time: convert_unix_timestamp_to_local_time_string(s.timestamp),
         value: s.value
     }));
 
-    // Map baseline values (rolling average)
+    // Convert baseline list into a timestamp lookup chart -> baseline is calculated in app.jsx
+    // This is moreso to quickly check if there is a baseline value for the exact timestamp
     const baselineMap = new Map(
-        baseline.map(b => [new Date(b.timestamp * 1000).toLocaleTimeString(), b.value])
+        baseline.map(b => [
+            convert_unix_timestamp_to_local_time_string(b.timestamp),
+            b.value
+        ])
     );
 
-    const data = points.map(p => ({
+    // Merge ICMP points and baseline value into a single chart
+    const data = points_list.map(p => ({
         ...p,
         baseline: baselineMap.get(p.time) ?? null
     }));
@@ -70,13 +56,8 @@ export default function IcmpChart({ stats = [], baseline = [] }) {
                         dot={false}
                         strokeDasharray="5 5"
                     />
->>>>>>> 0ac1ede (Upload full IDS backend with email notifications and detectors)
                 </LineChart>
             </ResponsiveContainer>
         </div>
     );
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 0ac1ede (Upload full IDS backend with email notifications and detectors)

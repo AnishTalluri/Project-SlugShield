@@ -2,7 +2,7 @@
 interface: lo0
 
 # Sliding window used for counting packets
-window_seconds: 10
+window_seconds: 60
 
 # Threshold to trigger ICMP alert within the window_seconds timeframe
 icmp_threshold_per_window: 500
