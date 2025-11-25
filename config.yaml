@@ -1,0 +1,31 @@
+# Which network interface to sniff on-> for now, auto
+interface: lo
+
+# Sliding window used for counting packets
+window_seconds: 10
+
+# Threshold to trigger ICMP alert within the window_seconds timeframe
+icmp_threshold_per_window: 500
+
+# Threshold for ARP spoofing detection - how many MAC address changes trigger an alert
+arp_mac_change_threshold: 3
+
+# Port Scan Detection thresholds
+portscan_fast_window_seconds: 60
+portscan_slow_window_seconds: 600
+portscan_slow_decay: 0.9
+portscan_min_unique_ports_fast: 5
+portscan_min_unique_ports_slow: 20
+portscan_min_unique_hosts_fast: 1
+portscan_min_syns_fast: 5
+portscan_max_syn_to_synack: 0.5
+portscan_enable_udp_detection: true
+portscan_min_udp_probes_fast: 5
+portscan_min_icmp_ratio: 0.2
+portscan_whitelist_cidrs: []
+portscan_debug: false
+
+# Log where alerts are written for now
+logging: 
+  alerts_log: alerts.log
+  level: INFO

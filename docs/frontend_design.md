@@ -1,0 +1,15 @@
+- ids_frontend(Frontend logic):
+    - src:
+        - app.jsx: fetch data, listen to WebSocket updates, and renders dashboard layout
+        - main.jsx: renders the App component into root HTML element
+        - styles.css: dashboard styling
+        - components:
+            - alerts_list.jsx: scrollable list of recent alerts with details such as the detector name, soure ip, timestamp
+            - icmp_chart.jsx: renders live updating line chart to show icmp packets per second alongside a baseline for anomoly comparison
+            - status_card.jsx: displays overall system heath, last update, and number of live alerts
+        - services: 
+            - websocket.js: keeps persistent WebSocket connection to receive real time alert and stat updates from backend
+            - api.js: contains helper functions to fetch alerts and icmp statistics via REST calls from FastAPI backend
+    - index.html: main HTML file that hosts React app-- provides root container where dashboard is rendered
+    - package.json: and of course, the packages needed 
+    - Baseline is just a rolling average of recent icmp packet rates seen by ids -> if sudden spike from avergae then detected(what I want to implement for baseline)
