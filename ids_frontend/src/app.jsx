@@ -5,6 +5,7 @@ import AlertsList from './components/alerts_list.jsx';
 import IcmpChart from './components/icmp_chart.jsx';
 import SshChart from './components/ssh_chart.jsx';
 import ArpChart from './components/arp_chart.jsx';
+import PortscanChart from './components/portscan_chart.jsx';
 import ThresholdPanel from "./components/ThresholdPanel.jsx";
 import EmailSettingsPanel from "./components/EmailSettingsPanel.jsx";
 import { fetch_alerts, fetch_icmp_stats, create_alert_socket } from './services/api.js';
@@ -17,6 +18,8 @@ export default function App() {
     const [sshBaseline, setSshBaseline] = useState([]);
     const [arpStats, setArpStats] = useState([]);
     const [arpBaseline, setArpBaseline] = useState([]);
+    const [portscanStats, setPortscanStats] = useState([]);
+    const [portscanBaseline, setPortscanBaseline] = useState([]);
     const [status, set_status] = useState('Ok');
     const [last_checked, set_last_checked] = useState(null);
 
@@ -62,10 +65,20 @@ export default function App() {
                 const mean = all.length ? all.reduce((a, b) => a + b, 0) / all.length : s.value;
                 return [...prev, { timestamp: s.timestamp, value: mean }].slice(-600);
             });
+        } else if (s.metric === 'portscan_attempts_per_second') {
+            setPortscanStats(prev => {
+                const next = [...prev, s].filter(p => now - p.timestamp <= 600);
+                return next.slice(-600);
+            });
+            setPortscanBaseline(prev => {
+                const all = [...portscanStats.map(x => x.value), s.value];
+                const mean = all.length ? all.reduce((a, b) => a + b, 0) / all.length : s.value;
+                return [...prev, { timestamp: s.timestamp, value: mean }].slice(-600);
+            });
         }
 
         set_last_checked(new Date().toLocaleTimeString());
-    }, [icmpStats, sshStats, arpStats]);
+    }, [icmpStats, sshStats, arpStats, portscanStats]);
 
     // === Initial load (alerts + stats) ===
     useEffect(() => {
@@ -92,9 +105,11 @@ export default function App() {
                 const icmp = message.stats.filter(s => s.metric === 'icmp_packets_per_second');
                 const ssh = message.stats.filter(s => s.metric === 'ssh_attempts_per_second');
                 const arp = message.stats.filter(s => s.metric === 'arp_spoofing_attempts_per_second');
+                const portscan = message.stats.filter(s => s.metric === 'portscan_attempts_per_second');
                 setIcmpStats(icmp);
                 setSshStats(ssh);
                 setArpStats(arp);
+                setPortscanStats(portscan);
             }
         });
 
@@ -135,6 +150,16 @@ export default function App() {
                     }
                 }
 
+                // Fetch latest Port Scan stats
+                const resPortscan = await fetch("http://127.0.0.1:8080/api/stats/portscan");
+                if (resPortscan.ok) {
+                    const dataPortscan = await resPortscan.json();
+                    if (dataPortscan.stats && dataPortscan.stats.length > 0) {
+                        dataPortscan.stats.forEach(stat => push_stat(stat));
+                        hasNewData = true;
+                    }
+                }
+
                 // Update timestamp if we got new data OR if it's the initial load (last_checked is null)
                 if (hasNewData || last_checked === null) {
                     set_last_checked(new Date().toLocaleTimeString());
@@ -168,6 +193,7 @@ export default function App() {
                     <SshChart stats={sshStats} baseline={sshBaseline} />
                     {console.log('ARP Stats:', arpStats)}
                     <ArpChart stats={arpStats} baseline={arpBaseline} />
+                    <PortscanChart stats={portscanStats} baseline={portscanBaseline} />
                 </section>
 
                 <aside className="right">

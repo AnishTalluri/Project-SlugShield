@@ -4,6 +4,7 @@ export default function ThresholdPanel() {
   const [sshValue, setSshValue] = useState("");
   const [icmpValue, setIcmpValue] = useState("");
   const [arpValue, setArpValue] = useState("");
+  const [portscanValue, setPortscanValue] = useState("");
 
   async function updateThreshold(detector, value) {
     if (!value) return alert("Please enter a value.");
@@ -71,6 +72,22 @@ export default function ThresholdPanel() {
         />
         <button
           onClick={() => updateThreshold("arp", arpValue)}
+          style={buttonStyle}
+        >
+          Update
+        </button>
+      </div>
+
+      <div style={rowStyle}>
+        <label style={labelStyle}>Port Scan Threshold:</label>
+        <input
+          type="number"
+          value={portscanValue}
+          onChange={(e) => setPortscanValue(e.target.value)}
+          style={inputStyle}
+        />
+        <button
+          onClick={() => updateThreshold("portscan", portscanValue)}
           style={buttonStyle}
         >
           Update

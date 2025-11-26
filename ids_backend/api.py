@@ -72,6 +72,14 @@ def get_arp_stats(interval: int = 60):
     )
     return {"stats": stats}
 
+@router.get("/api/stats/portscan")
+def get_portscan_stats(interval: int = 60):
+    stats = broadcaster.get_stats(
+        metric="portscan_attempts_per_second",
+        since_seconds=interval
+    )
+    return {"stats": stats}
+
 # ============================================================
 # WEBSOCKET
 # ============================================================
@@ -88,7 +96,7 @@ async def websocket_endpoint(websocket: WebSocket):
         })
 
         all_stats = []
-        for metric in ["icmp_packets_per_second", "ssh_attempts_per_second", "arp_spoofing_attempts_per_second"]:
+        for metric in ["icmp_packets_per_second", "ssh_attempts_per_second", "arp_spoofing_attempts_per_second", "portscan_attempts_per_second"]:
             all_stats.extend(broadcaster.get_stats(metric, 60))
 
         await websocket.send_json({
@@ -279,3 +287,65 @@ async def test_arp_alert():
     }
     await broadcaster.push_alert(alert_data)
     return {"status": "ok", "alert": alert_data}
+
+@router.post("/api/test/portscan_stat")
+async def test_portscan_stat():
+    now = time.time()
+    stat = {
+        "timestamp": now,
+        "metric": "portscan_attempts_per_second",
+        "value": 15
+    }
+    await broadcaster.push_stat(stat)
+    return {"status": "ok", "stat": stat}
+
+@router.post("/api/test/portscan_baseline")
+async def test_portscan_baseline():
+    """Send baseline port scan traffic (low value for normal activity)"""
+    now = time.time()
+    stat = {
+        "timestamp": now,
+        "metric": "portscan_attempts_per_second",
+        "value": 2
+    }
+    await broadcaster.push_stat(stat)
+    return {"status": "ok", "stat": stat}
+
+@router.post("/api/test/portscan_alert")
+async def test_portscan_alert():
+    now = time.time()
+    alert_data = {
+        "timestamp": now,
+        "severity": "high",
+        "detector": "port_scan",
+        "src": "10.0.2.100",
+        "unique_ports": 25,
+        "scan_type": "TCP SYN Scan",
+        "message": "[TEST] Port scan detected! Host 10.0.2.100 probed 25 unique ports"
+    }
+    await broadcaster.push_alert(alert_data)
+    return {"status": "ok", "alert": alert_data}
+
+@router.post("/api/test/portscan_tcp")
+async def test_portscan_tcp():
+    """Simulate TCP SYN scan (high value)"""
+    now = time.time()
+    stat = {
+        "timestamp": now,
+        "metric": "portscan_attempts_per_second",
+        "value": 30
+    }
+    await broadcaster.push_stat(stat)
+    return {"status": "ok", "stat": stat, "type": "TCP SYN Scan"}
+
+@router.post("/api/test/portscan_udp")
+async def test_portscan_udp():
+    """Simulate UDP scan (medium-high value)"""
+    now = time.time()
+    stat = {
+        "timestamp": now,
+        "metric": "portscan_attempts_per_second",
+        "value": 20
+    }
+    await broadcaster.push_stat(stat)
+    return {"status": "ok", "stat": stat, "type": "UDP Scan"}
