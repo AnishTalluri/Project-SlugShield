@@ -1,3 +1,5 @@
+# ids_backend/config.py
+
 import yaml
 import os
 
@@ -7,7 +9,8 @@ import os
 thresholds = {
     "ssh": 10,
     "icmp": 20,
-    "arp": 5
+    "arp": 5,
+    "portscan": 10
 }
 
 # ----------------------------
@@ -15,9 +18,23 @@ thresholds = {
 # ----------------------------
 defaults = {
     'interface': None,
-    'window_seconds': 60,
-    'icmp_threshold_per_window': 500,
+    'window_seconds': 10,
+    'icmp_threshold_per_window': 100,
+    'arp_mac_change_threshold': 3,
     'logging': {'alerts_log': 'alerts.log', 'level': 'INFO'},
+    # Port scan detection config
+    'portscan_fast_window_seconds': 60,
+    'portscan_slow_window_seconds': 600,
+    'portscan_slow_decay': 0.95,
+    'portscan_min_unique_ports_fast': 10,
+    'portscan_min_unique_ports_slow': 20,
+    'portscan_min_unique_hosts_fast': 5,
+    'portscan_min_syns_fast': 15,
+    'portscan_max_syn_to_synack': 3.0,
+    'portscan_enable_udp_detection': True,
+    'portscan_min_udp_probes_fast': 10,
+    'portscan_min_icmp_ratio': 0.5,
+    'portscan_whitelist_cidrs': [],
 }
 
 # ----------------------------

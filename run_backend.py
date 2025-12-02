@@ -1,11 +1,13 @@
-# Entry point to start FastAPI API, packet sniffer, detectors
+# run_backend.py
 
 import threading
 import time
 import uvicorn
+import asyncio
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
 from ids_backend.config import load_config_file
 from ids_backend.capture import PacketCapture
 from ids_backend.detectors.icmp_flood import icmp_counter_detector
@@ -13,10 +15,14 @@ from ids_backend.ssh_detector import ssh_detector
 from ids_backend.alerting import broadcaster   # GLOBAL broadcaster
 from ids_backend.api import router             # router only (NO app import)
 
-# Create FastAPI app
+
+# ============================================================
+# Create FastAPI app (the only app)
+# ============================================================
+
 app = FastAPI(title="IDS API")
 
-# Allow CORS-- basically the middleware to allow requests made to backend
+# Allow CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -25,28 +31,42 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include api routes from router
+# Add all routes from api.py
 app.include_router(router)
 
+
+# ============================================================
 # Start API in background thread
+# ============================================================
+
 def start_api():
     uvicorn.run(app, host="127.0.0.1", port=8080, log_level="info")
 
-def main():
-    app_config = load_config_file() # Load configuration from yaml file
-    live_packet_sniffer = PacketCapture(app_config) # Initialize packet sniffer
 
-    # Initialize icmp detector and attach to sniffer
+# ============================================================
+# Main IDS Logic
+# ============================================================
+
+#yeh
+
+def main():
+    app_config = load_config_file()
+
+    # Shared global broadcaster → already imported
+    live_packet_sniffer = PacketCapture(app_config)
+
+    # ICMP detector using the same broadcaster
     icmp_detector = icmp_counter_detector(app_config, broadcaster)
     live_packet_sniffer.add_detection(icmp_detector.analyze_packet)
 
-    # Attach SSH detector
+    # SSH detector
     live_packet_sniffer.add_detection(ssh_detector)
 
+    # Start API server
     api_thread = threading.Thread(target=start_api, daemon=True)
     api_thread.start()
 
-    # Start live packet sniffer in background
+    # Start packet sniffer
     sniff_thread = threading.Thread(target=live_packet_sniffer.start_sniff, daemon=True)
     sniff_thread.start()
 

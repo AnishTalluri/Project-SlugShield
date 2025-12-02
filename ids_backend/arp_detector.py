@@ -22,6 +22,7 @@ import time
 from collections import defaultdict
 from scapy.layers.l2 import ARP
 from .centralized_detector import centralized_detector
+from .config import thresholds
 
 # arp_spoof_detector class here
 class arp_spoof_detector(centralized_detector):
@@ -31,7 +32,6 @@ class arp_spoof_detector(centralized_detector):
         
         # Configuration from config.yaml
         self.window = app_config.window_seconds  # Time window to track changes
-        self.threshold = app_config.arp_mac_change_threshold  # How many MAC changes trigger alert
         
         # Data structures to track ARP behavior
         self.ip_mac_map = defaultdict(set)  # IP -> set of MAC addresses seen
@@ -83,8 +83,11 @@ class arp_spoof_detector(centralized_detector):
         # Step 5: Check if the number of MAC changes exceeds our threshold
         count = len(self.mac_change_times[ip])  # Number of recent MAC changes for this IP
 
+        # Get dynamic threshold (can be updated via API)
+        threshold = thresholds.get("arp", 3)
+
         # If count exceeds threshold --> ARP spoofing attack detected
-        if count >= self.threshold:
+        if count >= threshold:
             self.alert({
                 'detector': 'arp_spoof',  # Detector name
                 'ip': ip,  # IP address being spoofed
@@ -92,9 +95,10 @@ class arp_spoof_detector(centralized_detector):
                 'known_macs': list(known_macs),  # All MAC addresses seen for this IP
                 'mac_changes': count,  # Number of MAC changes detected
                 'window_seconds': self.window,  # Time window for these changes
+                'threshold': threshold,  # Current threshold
                 'message': (
                     f'ARP spoofing detected! IP {ip} has been associated with '
-                    f'{count} different MAC addresses in {self.window} seconds. '
+                    f'{count} different MAC addresses in {self.window} seconds (threshold: {threshold}). '
                     f'Current MAC: {mac}, All MACs seen: {list(known_macs)}'
                 )
             })

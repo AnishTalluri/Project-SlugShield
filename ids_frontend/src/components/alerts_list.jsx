@@ -1,36 +1,77 @@
-// Show scrollable list of recent alerts
+// Show scrollable list of recent alerts with modern dark theme
 import React from 'react';
 
-// Helper funtion to render a single alert card or row
-function AlertItem({alert}) {
+// Helper function to determine alert severity class
+function getAlertSeverity(alert) {
+    // Check if message contains high numbers (indicating severity)
+    const match = alert.message?.match(/(\d+)/);
+    if (match) {
+        const value = parseInt(match[1]);
+        if (value > 50) return 'alert-item'; // High severity (red)
+        if (value > 20) return 'alert-item warning'; // Medium severity (orange)
+    }
+    return 'alert-item info'; // Low severity (blue)
+}
+
+// Helper function to format detector name for display
+function formatDetectorName(detector) {
+    const nameMap = {
+        'icmp_flood': 'ICMP Flood Detected',
+        'ssh_bruteforce': 'SSH Brute Force',
+        'arp_spoofing': 'ARP Spoofing',
+        'port_scan': 'Port Scan Activity'
+    };
+    return nameMap[detector] || detector.replace(/_/g, ' ').toUpperCase();
+}
+
+// Helper function to render a single alert card
+function AlertItem({ alert }) {
+    const severityClass = getAlertSeverity(alert);
+    const detectorName = formatDetectorName(alert.detector);
+
     return (
-        <div className = "alert-item">
-            <div className = "alert-header">
-                <strong> {alert.detector}</strong>
-                <span className = "time"> {new Date(alert.timestamp * 1000).toLocaleTimeString()}</span>
+        <div className={severityClass}>
+            <div className="alert-header">
+                <div className="alert-type">{detectorName}</div>
+                <div className="alert-time">
+                    {new Date(alert.timestamp * 1000).toLocaleTimeString()}
+                </div>
             </div>
-            {/* Display single alert card here */}
-            <div className = "alert-message"> {alert.message}</div>
-            <div className = "alert-meta"> 
-                {alert.src && <span>src: {alert.src}</span>}
-                {alert.count !== undefined && <span>count: {alert.count}</span>}
+            <div className="alert-details">
+                {alert.src && (
+                    <>
+                        Source: <span className="alert-ip">{alert.src}</span>
+                        {alert.message && <> • {alert.message}</>}
+                    </>
+                )}
+                {!alert.src && alert.message && alert.message}
             </div>
         </div>
     );
-} 
+}
 
 // Component shown on webpage
-export default function AlertsList({ alerts = []}) {
+export default function AlertsList({ alerts = [] }) {
     return (
-        <div className = "alerts-list">
-            <h3>Recent Alerts</h3>
-            {/* Initial display */}
-            {alerts.length === 0 && <div className = "no-alerts"> No alerts</div>}
-
-            {/* Displays all alert cards*/}
-            <div className = "alerts-scroll">
-                {alerts.map((alert) => <AlertItem key={alert.id || alert.timestamp} alert={alert} />)}
+        <div className="alerts-list">
+            <div className="panel-header">
+                <div className="panel-title">Active Alerts</div>
+                {alerts.length > 0 && (
+                    <div className="panel-badge">{alerts.length}</div>
+                )}
             </div>
+            {alerts.length === 0 ? (
+                <div className="no-alerts">
+                    ✓ No active alerts<br />
+                    <span style={{ fontSize: '12px', color: '#666' }}>System is secure</span>
+                </div>
+            ) : (
+                <div className="alerts-container">
+                    {alerts.map((alert, index) => (
+                        <AlertItem key={alert.id || `${alert.timestamp}-${index}`} alert={alert} />
+                    ))}
+                </div>
+            )}
         </div>
     );
 }

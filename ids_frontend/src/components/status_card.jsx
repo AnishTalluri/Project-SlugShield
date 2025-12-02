@@ -2,7 +2,7 @@
 import React from 'react';
 
 // Helper function that takes system status string and return object with text and colors
-function get_system_health(status) {
+function system_health(status) {
     if (status == 'Ok') {
         return {text: 'Ok', color: '#16a34a'};
     }
@@ -13,9 +13,8 @@ function get_system_health(status) {
 
 // Top-of-page summary card for system health
 export default function StatusCard({ status = 'Ok', last_checked = null, active_alerts = []}) {
-    const health = get_system_health(status);
-    
-    // Show number of active alerts
+    const health = system_health(status);
+    // Show number of alerts
     const alerts_summary = active_alerts.length ? `${active_alerts.length} alert(s)` : 'No active alerts';
 
     // What the webpage will show

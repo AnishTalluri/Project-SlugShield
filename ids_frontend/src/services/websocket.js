@@ -9,27 +9,27 @@ export function create_alert_socket(on_message) {
     };
 
     // Handle messages received from server
-    websocket.onmessage = (event) => {
+    websocket.onmessage = (evt) => {
         try {
             // Parse the raw message string sent from backend
-            const data = JSON.parse(event.data);
+            const data = JSON.parse(evt.data);
             // Call user callback with parsed message
             on_message(data)
-        } catch (error) {
+        } catch (e) {
             // Error in parsing 
-            console.error('websocket parsing error:', error);
+            console.error('websocket parsing error:', e);
         }
     };
 
-    // When connection closes -> log connection closed and give reason-- also trying reconnection
-    websocket.onclose = (event) => {
-        console.log('websocket closed, reconnecting in 2 seconds', event.reason);
+    // When connection closes -> log connection closed and reason as well as trying reconnecting
+    websocket.onclose = (e) => {
+        console.log('websocket closed, reconnecting in 2 seconds', e.reason);
         setTimeout(() => create_alert_socket(on_message), 2000);
     };
 
     // Runtime errors during connection
-    websocket.onerror = (error) => {
-        console.error('websocket error', error);
+    websocket.onerror = (err) => {
+        console.error('websocket error', err);
         websocket.close();
     };
 

@@ -23,20 +23,12 @@ _alerted_srcs = {}
 _last_stat_time = 0
 
 
-def _prune_deque(dq, now):
-    cutoff = now - WINDOW
-    while dq and dq[0] < cutoff:
-        dq.popleft()
-
-
 def ssh_detector(packet):
-    """
-    SSH brute-force detection + SSH attempts/s stats for graph.
-    """
+    #SSH brute-force detection + SSH attempts/s stats for graph.
     global _last_stat_time
 
     try:
-        if not packet.haslayer(IP) or not packet.haslayer(TCP):
+        if not packet.haslayer(TCP) or not packet.haslayer(IP):
             return
 
         ip = packet[IP]
@@ -46,70 +38,63 @@ def ssh_detector(packet):
         if tcp.dport != 22 or not (tcp.flags & 0x02):
             return
 
-        src = ip.src
-        if src in IGNORE_IPS:
+        src_ip = ip.src
+        if src_ip in IGNORE_IPS:
             return
 
         now = time.time()
 
         # Track attempts
-        dq = _recent_attempts[src]
-        dq.append(now)
-        _prune_deque(dq, now)
+        attempts = _recent_attempts[src_ip]
+        attempts.append(now)
 
-        # ---------------------------------------------------
-        # 📈 PUSH SSH ATTEMPTS PER SECOND (for graph)
-        # ---------------------------------------------------
+        # Prune old timestamps
+        cutoff = now - WINDOW
+        while attempts and attempts[0] < cutoff:
+            attempts.popleft()
+
+        # PUSH SSH ATTEMPTS PER SECOND (for graph)
         if now - _last_stat_time >= 1:
             total_attempts = sum(len(v) for v in _recent_attempts.values())
             attempts_per_second = total_attempts / WINDOW
 
             try:
-                # Use asyncio.create_task so async function executes correctly
                 asyncio.create_task(
                     broadcaster.push_stat({
                         "timestamp": now,
                         "metric": "ssh_attempts_per_second",
-                        "value": attempts_per_second,
+                        "value": attempts_per_second
                     })
                 )
-            except Exception as e:
-                logging.error(f"Failed to push ssh stat: {e}")
+            except RuntimeError:
+                pass
 
             _last_stat_time = now
 
-        # ---------------------------------------------------
-        # 🚨 Raise alert if threshold exceeded
-        # ---------------------------------------------------
-        if len(dq) >= thresholds["ssh"]:
-            last_alert = _alerted_srcs.get(src, 0)
+        # ALERT IF THRESHOLD EXCEEDED
+        DEFAULT_THRESHOLD = 10
+        threshold = thresholds.get("ssh", DEFAULT_THRESHOLD)
+        #threshold = thresholds.get("ssh", 10)
+        if len(attempts) >= threshold:
+            last_alert = _alerted_srcs.get(src_ip, 0)
+            if now - last_alert < ALERT_COOLDOWN:
+                return
 
-            if now - last_alert >= ALERT_COOLDOWN:
-                msg = (
-                    f"[ALERT] Repeated SSH login attempts from {src}: "
-                    f"{len(dq)} attempts in {WINDOW}s"
-                )
-                print(msg)
-                logging.warning(msg)
-                _alerted_srcs[src] = now
+            _alerted_srcs[src_ip] = now
+            logging.warning(f"SSH brute-force detected from {src_ip}: {len(attempts)} attempts in {WINDOW}s")
 
-                alert_data = {
-                    "timestamp": now,
-                    "severity": "high",
-                    "detector": "ssh_bruteforce",
-                    "src": src,
-                    "message": msg,
-                }
+            alert_data = {
+                "timestamp": now,
+                "severity": "high",
+                "detector": "ssh_bruteforce",
+                "src": src_ip,
+                "message": f"Repeated SSH login attempts detected from {src_ip} ({len(attempts)} in {WINDOW}s)"
+            }
 
-                # async alert delivery
-                try:
-                    asyncio.create_task(broadcaster.push_alert(alert_data))
-                except Exception as e:
-                    logging.error(f"Failed to push ssh alert: {e}")
-
-                dq.clear()
-            else:
-                dq.clear()
+            try:
+                asyncio.create_task(broadcaster.push_alert(alert_data))
+            except RuntimeError:
+                pass
 
     except Exception as e:
-        logging.error(f"SSH detector exception: {e}")
+        logging.error(f"Error in ssh_detector: {e}")

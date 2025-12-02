@@ -1,13 +1,13 @@
-// Renders live ICMP traffic chart with modern dark theme
+// Renders live port scan detection chart with modern dark theme
 import React from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from 'recharts';
 
-export default function IcmpChart({ stats = [], baseline = [] }) {
-    // Filter stats for ICMP packets only
-    const icmpStats = stats.filter(s => s.metric === "icmp_packets_per_second");
+export default function PortscanChart({ stats = [], baseline = [] }) {
+    // Filter stats for port scan attempts only
+    const portscanStats = stats.filter(s => s.metric === "portscan_attempts_per_second");
 
     // Map to chart points
-    const points = icmpStats.map(s => ({
+    const points = portscanStats.map(s => ({
         time: new Date(s.timestamp * 1000).toLocaleTimeString(),
         value: s.value
     }));
@@ -45,7 +45,7 @@ export default function IcmpChart({ stats = [], baseline = [] }) {
                             fontSize: '12px', 
                             margin: '2px 0' 
                         }}>
-                            {entry.name}: {entry.value?.toFixed(2)} pkt/s
+                            {entry.name}: {entry.value?.toFixed(2)} scans/s
                         </p>
                     ))}
                 </div>
@@ -59,14 +59,14 @@ export default function IcmpChart({ stats = [], baseline = [] }) {
             <div className="chart-header">
                 <div className="chart-title">
                     <div className="chart-indicator"></div>
-                    ICMP Flood Detection
+                    Port Scan Detection
                 </div>
                 <div className="chart-stats">
                     <div className="stat-item">
-                        <strong>Current:</strong> {currentValue?.toFixed(1)} pkt/s
+                        <strong>Current:</strong> {currentValue?.toFixed(1)} scans/s
                     </div>
                     <div className="stat-item">
-                        <strong>Baseline:</strong> {baselineValue?.toFixed(1)} pkt/s
+                        <strong>Baseline:</strong> {baselineValue?.toFixed(1)} scans/s
                     </div>
                 </div>
             </div>
@@ -93,7 +93,7 @@ export default function IcmpChart({ stats = [], baseline = [] }) {
                             strokeWidth={2}
                             dot={false}
                             isAnimationActive={false}
-                            name="Packets/s"
+                            name="Scans/s"
                         />
                         <Line
                             type="monotone"
@@ -112,7 +112,7 @@ export default function IcmpChart({ stats = [], baseline = [] }) {
             <div className="chart-legend">
                 <div className="legend-item">
                     <div className="legend-color green"></div>
-                    Packets/Second
+                    Scans/Second
                 </div>
                 <div className="legend-item">
                     <div className="legend-color orange"></div>
