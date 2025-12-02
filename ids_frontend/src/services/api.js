@@ -1,6 +1,6 @@
 // Helper functions to fetch data from backend rest api
-// const base = 'http://127.0.0.1:8080'; // Update this if backend ever updates
-const base = import.meta.env.VITE_API_BASE_URL; // Updated so now uses env variable for flexibility
+const base = 'http://127.0.0.1:8080'; // Update this if backend ever updates
+// const base = import.meta.env.VITE_API_BASE_URL; // Updated so now uses env variable for flexibility
 
 // Fetch recent alerts from backend
 export async function fetch_alerts(limit = 100) {
@@ -32,8 +32,8 @@ export async function fetch_icmp_stats(interval = 60) {
 
 // Create WebSocket connection for real-time alerts and stats
 export function create_alert_socket(callback) {
-    // const ws = new WebSocket('ws://127.0.0.1:8080/websocket/alerts');
-    const ws = new WebSocket(`${base.replace('http', 'ws')}/websocket/alerts`); // Adjusted for env variable usage
+    const ws = new WebSocket('ws://127.0.0.1:8080/websocket/alerts');
+    // const ws = new WebSocket(`${base.replace('http', 'ws')}/websocket/alerts`); // Adjusted for env variable usage
     
     ws.onmessage = (event) => {
         try {

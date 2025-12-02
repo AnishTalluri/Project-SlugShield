@@ -153,8 +153,8 @@ export default function App() {
                 let hasNewData = false;
 
                 // Fetch latest ICMP stats
-                // const resIcmp = await fetch("http://127.0.0.1:8080/api/stats/icmp");
-                const resIcmp = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/stats/icmp`);
+                const resIcmp = await fetch("http://127.0.0.1:8080/api/stats/icmp");
+                // const resIcmp = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/stats/icmp`);
                 const dataIcmp = await resIcmp.json();
                 if (dataIcmp.stats && dataIcmp.stats.length > 0) {
                     dataIcmp.stats.forEach(stat => push_stat(stat));
@@ -162,8 +162,8 @@ export default function App() {
                 }
 
                 // Fetch latest SSH stats
-                // const resSsh = await fetch("http://127.0.0.1:8080/api/stats/ssh");
-                const resSsh = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/stats/ssh`);
+                const resSsh = await fetch("http://127.0.0.1:8080/api/stats/ssh");
+                // const resSsh = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/stats/ssh`);
                 if (resSsh.ok) {
                     const dataSsh = await resSsh.json();
                     if (dataSsh.stats && dataSsh.stats.length > 0) {
@@ -173,8 +173,8 @@ export default function App() {
                 }
 
                 // Fetch latest ARP stats
-                // const resArp = await fetch("http://127.0.0.1:8080/api/stats/arp");
-                const resArp = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/stats/arp`);
+                const resArp = await fetch("http://127.0.0.1:8080/api/stats/arp");
+                // const resArp = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/stats/arp`);
                 if (resArp.ok) {
                     const dataArp = await resArp.json();
                     if (dataArp.stats && dataArp.stats.length > 0) {
@@ -184,8 +184,8 @@ export default function App() {
                 }
 
                 // Fetch latest Port Scan stats
-                // const resPortscan = await fetch("http://127.0.0.1:8080/api/stats/portscan");
-                const resPortscan = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/stats/portscan`);
+                const resPortscan = await fetch("http://127.0.0.1:8080/api/stats/portscan");
+                // const resPortscan = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/stats/portscan`);
                 if (resPortscan.ok) {
                     const dataPortscan = await resPortscan.json();
                     if (dataPortscan.stats && dataPortscan.stats.length > 0) {
