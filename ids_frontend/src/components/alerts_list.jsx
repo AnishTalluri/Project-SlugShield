@@ -51,25 +51,44 @@ function AlertItem({ alert }) {
 }
 
 // Component shown on webpage
-export default function AlertsList({ alerts = [] }) {
+// Component shown on webpage
+export default function AlertsList({ alerts }) {
+    // Normalize alerts into an array so .length and .map are always safe
+    let normalizedAlerts = [];
+
+    if (Array.isArray(alerts)) {
+        normalizedAlerts = alerts;
+    } else if (alerts && typeof alerts === "object") {
+        // If it's a single alert object, wrap it
+        normalizedAlerts = [alerts];
+    } else {
+        // Null / undefined / weird types → treat as "no alerts"
+        console.warn("AlertsList: unexpected alerts value:", alerts);
+        normalizedAlerts = [];
+    }
+
     return (
         <div className="alerts-list">
             <div className="panel-header">
                 <div className="panel-title">Active Alerts</div>
-                {alerts.length > 0 && (
-                    <div className="panel-badge">{alerts.length}</div>
+                {normalizedAlerts.length > 0 && (
+                    <div className="panel-badge">{normalizedAlerts.length}</div>
                 )}
             </div>
-            {/* Initial display*/}
-            {alerts.length === 0 ? (
+            {/* Initial display */}
+            {normalizedAlerts.length === 0 ? (
                 <div className="no-alerts">
                     ✓ No active alerts<br />
                     <span style={{ fontSize: '12px', color: '#666' }}>System is secure</span>
                 </div>
-            ) : {/* Displays all alert cards*/}(
+            ) : (
+                // Displays all alert cards
                 <div className="alerts-container">
-                    {alerts.map((alert, index) => (
-                        <AlertItem key={alert.id || `${alert.timestamp}-${index}`} alert={alert} />
+                    {normalizedAlerts.map((alert, index) => (
+                        <AlertItem
+                            key={alert.id || `${alert.timestamp}-${index}`}
+                            alert={alert}
+                        />
                     ))}
                 </div>
             )}
