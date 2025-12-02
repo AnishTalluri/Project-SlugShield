@@ -40,7 +40,7 @@ from collections import defaultdict, deque
 
 from scapy.layers.inet import IP, TCP, UDP, ICMP
 
-from .centralized_detector import centralized_detector
+from ..centralized_detector import centralized_detector
 
 
 class port_scan_detector(centralized_detector):

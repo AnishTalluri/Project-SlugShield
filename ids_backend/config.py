@@ -1,5 +1,3 @@
-# ids_backend/config.py
-
 import yaml
 import os
 

@@ -5,8 +5,8 @@ import time
 from collections import defaultdict, deque
 import asyncio
 
-from ids_backend.alerting import broadcaster
-from ids_backend.config import thresholds
+from ..alerting import broadcaster
+from ..config import thresholds
 
 logging.basicConfig(
     filename="detections.log",

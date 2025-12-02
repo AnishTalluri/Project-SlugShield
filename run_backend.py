@@ -1,9 +1,6 @@
-# run_backend.py
-
 import threading
 import time
 import uvicorn
-import asyncio
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -11,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from ids_backend.config import load_config_file
 from ids_backend.capture import PacketCapture
 from ids_backend.detectors.icmp_flood import icmp_counter_detector
-from ids_backend.ssh_detector import ssh_detector
+from ids_backend.detectors.ssh_detector import ssh_detector
 from ids_backend.alerting import broadcaster   # GLOBAL broadcaster
 from ids_backend.api import router             # router only (NO app import)
 

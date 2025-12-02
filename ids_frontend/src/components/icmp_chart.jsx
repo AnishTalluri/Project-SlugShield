@@ -53,7 +53,7 @@ export default function IcmpChart({ stats = [], baseline = [] }) {
         }
         return null;
     };
-
+    
     return (
         <div className="chart-card">
             <div className="chart-header">
@@ -108,7 +108,7 @@ export default function IcmpChart({ stats = [], baseline = [] }) {
                     </LineChart>
                 </ResponsiveContainer>
             </div>
-
+            {/* Metrics */}
             <div className="chart-legend">
                 <div className="legend-item">
                     <div className="legend-color green"></div>

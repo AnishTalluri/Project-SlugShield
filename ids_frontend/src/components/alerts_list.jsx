@@ -60,12 +60,13 @@ export default function AlertsList({ alerts = [] }) {
                     <div className="panel-badge">{alerts.length}</div>
                 )}
             </div>
+            {/* Initial display*/}
             {alerts.length === 0 ? (
                 <div className="no-alerts">
                     ✓ No active alerts<br />
                     <span style={{ fontSize: '12px', color: '#666' }}>System is secure</span>
                 </div>
-            ) : (
+            ) : {/* Displays all alert cards*/}(
                 <div className="alerts-container">
                     {alerts.map((alert, index) => (
                         <AlertItem key={alert.id || `${alert.timestamp}-${index}`} alert={alert} />

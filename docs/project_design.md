@@ -1,14 +1,25 @@
-- First thing is first, make sure you:
-    - Are in the directory for this project 
-    - Create an environment for testing: python3 -m venv venv
-    - Activate environment: source venv/bin/activate(Please make sure to not push venv onto github-- no need to)
-    - Download the packages needed for backend: pip install -r requirements.txt
-        - Side Note: Some of these packages require the latest python update to run
+- docs
+    - backend_design.md: file that explains the backend design
+    - frontend_design.md: file that explains the frontend design
+    - project_design.md: file that explains each file in the root directory 
+
+- ids_backend: directory of the backend -> read backend_design.md for logic design
+
+- ids_frontend: directory of the frontend -> read frontend_design.md for logic design
+
+- tools
+    - simulate_arp_spoof.py: sends a range of normal traffic, thten arp spoof simulation, then back
+    to normal traffic
+    - simulate_icmp_flood.py: sends a range of normal traffic, then icmp flood simulation, then back
+    to normal traffic
+    - simulate_port_scan.py: sends a range of normal traffic, then tcp port scan followed by udp port scan, then back to normal traffic
+    - simulate_ssh_detections.py: sends a range of normal traffic, then ssh bruteforce detection, then
+    back to normal traffic
 
 - config.yaml: user-editable configuration-- you change threshold values and such here 
-- run_backend.py: run the actual backend of the project
-- tools
-    - simulate_icmp_flood.py: sends a range of icmp packets to the detector
+
+- README.md: file explaining the purpose of this application 
+
 - requirements.txt
     - scapy: packet capture and network traffic analysis
     - fastapi: web api backend framework -> exposes data to frontend
@@ -19,12 +30,4 @@
 
 - run_backend.py: entry point for IDS backend as well as starting FastAPI server and network packet detector within same event loop-- ensures real time updates flow to frontend via shared broadcaster
 
-- How to start application:
-    - Make sure you are in an environment first and have installed requirements.txt
-    - Go into Project_Slugshild directory and run sudo -E venv/bin/python3 run_backend.py
-    - Then go into ids_frontend directory and run npm run dev (run npm install first if you never ran it before)
-    - Testing for icmp flood:
-        - Set interface in config.yaml to lo0 just so you can test this on same machine
-            - On different terminal run sudo -E venv/bin/python3 tools/simulate_icmp_flood.py 127.0.0.1 1000
-                - 127.0.0.1 represents lo0 ip address
-                - 1000 amount of packets you want to test 
+- backend_render.py: file to keep backend running online

@@ -1,5 +1,3 @@
-# ids_backend/api.py
-
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 from ids_backend.alerting import broadcaster
@@ -10,29 +8,31 @@ import time
 
 router = APIRouter()
 
-# ============================================================
-# EMAIL ROUTES
-# ============================================================
-
 class EmailUpdate(BaseModel):
+    # Request body for updating user's alert email
     email: str
 
+class ThresholdUpdate(BaseModel):
+    # Request body for updating detector thresholds
+    detector_name: str
+    new_value: int
+
+# ============================================================
+# Email Endpoints
+# ============================================================
 @router.post("/api/set_email")
 def set_email(update: EmailUpdate):
-    """Set the user's preferred alert email address."""
+    #Set the user's preferred alert email address
     current_email["address"] = update.email
     return {"status": "ok", "email": update.email}
 
 # ============================================================
-# THRESHOLD UPDATE
+# Threshold Endpoints
 # ============================================================
-
-class ThresholdUpdate(BaseModel):
-    detector_name: str
-    new_value: int
 
 @router.post("/set_threshold")
 def set_threshold(update: ThresholdUpdate):
+    # Update threshold value for specific detector
     if update.detector_name not in thresholds:
         return {"status": "error", "message": "Unknown detector"}
 
@@ -40,16 +40,18 @@ def set_threshold(update: ThresholdUpdate):
     return {"status": "ok", "thresholds": thresholds}
 
 # ============================================================
-# API ENDPOINTS
+# Alert and Stat Endpoints
 # ============================================================
 
 @router.get("/api/alerts")
 def get_alerts(limit: int = 100):
+    # Retrieve the most recent alerts, up to the specified limit
     alerts = broadcaster.get_alerts(limit=limit)
     return {"alerts": alerts}
 
 @router.get("/api/stats/icmp")
 def get_icmp_stats(interval: int = 60):
+    # Retrieve ICMP packet statistics for the past interval seconds
     stats = broadcaster.get_stats(
         metric="icmp_packets_per_second",
         since_seconds=interval
@@ -58,6 +60,7 @@ def get_icmp_stats(interval: int = 60):
 
 @router.get("/api/stats/ssh")
 def get_ssh_stats(interval: int = 60):
+    # Retrieve SSH attempt statistics for the past interval seconds
     stats = broadcaster.get_stats(
         metric="ssh_attempts_per_second",
         since_seconds=interval
@@ -66,6 +69,7 @@ def get_ssh_stats(interval: int = 60):
 
 @router.get("/api/stats/arp")
 def get_arp_stats(interval: int = 60):
+    # Retrieve Arp spoofing attempt statistics for the past interval seconds
     stats = broadcaster.get_stats(
         metric="arp_spoofing_attempts_per_second",
         since_seconds=interval
@@ -74,6 +78,7 @@ def get_arp_stats(interval: int = 60):
 
 @router.get("/api/stats/portscan")
 def get_portscan_stats(interval: int = 60):
+    # Retrieve port scan attempt statistics for the past interval seconds
     stats = broadcaster.get_stats(
         metric="portscan_attempts_per_second",
         since_seconds=interval
@@ -81,20 +86,24 @@ def get_portscan_stats(interval: int = 60):
     return {"stats": stats}
 
 # ============================================================
-# WEBSOCKET
+# Websocket Endpoints
 # ============================================================
 
 @router.websocket("/websocket/alerts")
 async def websocket_endpoint(websocket: WebSocket):
+    # Websocket endpoint for live alerts and statistics updates
+    # Send initial state and listen for incoming pings 
     await websocket.accept()
-    await broadcaster.register(websocket)
+    await broadcaster.register_new_websocket_client(websocket)
 
     try:
+        # Send initial alerts
         await websocket.send_json({
             "type": "init",
             "alerts": broadcaster.get_alerts(20)
         })
 
+        # Send initial stats
         all_stats = []
         for metric in ["icmp_packets_per_second", "ssh_attempts_per_second", "arp_spoofing_attempts_per_second", "portscan_attempts_per_second"]:
             all_stats.extend(broadcaster.get_stats(metric, 60))
@@ -108,39 +117,56 @@ async def websocket_endpoint(websocket: WebSocket):
             await websocket.receive_text()
 
     except WebSocketDisconnect:
-        await broadcaster.unregister(websocket)
+        await broadcaster.unregister_websocket_client(websocket)
 
 # ============================================================
-# TEST ALERTS / EMAIL
+# Test Stats(for dashboard and graph debugging) 
 # ============================================================
 
-@router.post("/api/test/ssh")
-async def test_ssh_alert():
-    now = time.time()
-    alert_data = {
-        "timestamp": now,
-        "severity": "high",
-        "detector": "ssh_bruteforce",
-        "src": "192.168.1.55",
-        "message": "[TEST] Simulated SSH brute-force alert",
+async def send_test_stat(metric: str, value: float):
+    # Push single stat to broadcaster
+    stat = {
+        "timestamp": time.time(),
+        "metric": metric,
+        "value": value
     }
-    await broadcaster.push_alert(alert_data)
-    return {"status": "ok", "alert": alert_data}
+    await broadcaster.push_stat(stat)
+    return stat
 
-@router.post("/api/test/icmp_alert")
-async def test_icmp_alert():
-    now = time.time()
-    alert_data = {
-        "timestamp": now,
-        "severity": "high",
-        "detector": "icmp_flood",
-        "src": "10.0.0.167",
-        "rate": 500,
-        "message": "[TEST] Simulated ICMP flood alert"
-    }
+@router.post("/api/test/stats")
+async def test_stats():
+    # Push test stats for ICMP and SSH metrics
+    icmp_stat = await send_test_stat("icmp_packets_per_second", 12.4)
+    ssh_stat = await send_test_stat("ssh_attempts_per_second", 5.8)
+    return {"status": "ok", "stats": [icmp_stat, ssh_stat]}
 
-    await broadcaster.push_alert(alert_data)
-    return {"status": "ok", "alert": alert_data}
+@router.post("/api/test/icmp_stat")
+async def test_icmp_stat():
+    # Push a test ICMP stat for graph debugging
+    return await send_test_stat("icmp_packets_per_second", 50) # Simulate 50 packets per second
+
+@router.post("/api/test/ssh_stat")
+async def test_ssh_stat():
+    # Push a test SSH stat for graph debugging
+    return await send_test_stat("ssh_attempts_per_second", 25) # Simulate 25 packets per second
+
+@router.post("/api/test/arp_stat")
+async def test_arp_stat():
+    # Push a test ARP stat for graph debugging
+    return await send_test_stat("arp_spoofing_attempts_per_second", 8) # Simulate 8 packets per second
+    
+@router.post("/api/test/portscan_stat")
+async def test_portscan_stat():
+    # Push a test PortScan stat for graph debugging
+    return await send_test_stat("portscan_attempts_per_second", 15) # Simulate 15 packets per second
+    
+# ============================================================
+# Test Alerts / Emails
+# ============================================================
+
+@router.get("/api/debug/email")
+def debug_email():
+    return {"email": current_email["address"]}
 
 @router.post("/api/test/email/ssh")
 def test_email_ssh():
@@ -176,118 +202,39 @@ def test_email_ssh():
 
     return {"status": "sent", "to": current_email["address"]}
 
-@router.get("/api/debug/email")
-def debug_email():
-    return {"email": current_email["address"]}
-
-@router.post("/api/test/stats")
-async def test_stats():
-    now = time.time()
-
-    icmp_stat = {
-        "timestamp": now,
-        "metric": "icmp_packets_per_second",
-        "value": 12.4,
+async def send_test_alert(detector: str, src: str, message: str, rate: int = None):
+    # Create and push a test alert
+    alert_data = {
+        "timestamp": time.time(),
+        "severity": "high",
+        "detector": detector,
+        "src": src,
+        "message": message,
     }
-    ssh_stat = {
-        "timestamp": now,
-        "metric": "ssh_attempts_per_second",
-        "value": 5.8,
-    }
+    if rate is not None:
+        alert_data["rate"] = rate
+    
+    await broadcaster.push_alert(alert_data)
+    return {"status": "ok", "alert": alert_data}
 
-    await broadcaster.push_stat(icmp_stat)
-    await broadcaster.push_stat(ssh_stat)
+@router.post("/api/test/ssh")
+async def test_ssh_alert():
+    return await send_test_alert(
+        detector = "ssh_bruteforce",
+        src = "192.168.1.55",
+        message = "[TEST] Simulate SSH brute-force alert"
+    )
 
-    return {"status": "ok", "stats": [icmp_stat, ssh_stat]}
-
-# ============================================================
-# TEST STATS (for graph debugging)
-# ============================================================
-
-@router.post("/api/test/icmp")
-async def test_icmp_stat():
-    now = time.time()
-    stat = {
-        "timestamp": now,
-        "metric": "icmp_packets_per_second",
-        "value": 50
-    }
-    await broadcaster.push_stat(stat)
-    return {"status": "ok", "stat": stat}
-
-
-# ============================================================
-# CUSTOM ICMP STAT ENDPOINT (Allows dynamic flood values)
-# ============================================================
-@router.post("/api/test/icmp_stat_custom")
-async def icmp_stat_custom(value: int):
-    now = time.time()
-    stat = {
-        "timestamp": now,
-        "metric": "icmp_packets_per_second",
-        "value": value
-    }
-    await broadcaster.push_stat(stat)
-    return {"status": "ok", "stat": stat}
-
-
-@router.post("/api/test/icmp_baseline")
-async def test_icmp_baseline():
-    """Send baseline ICMP traffic (low value for normal activity)"""
-    now = time.time()
-    stat = {
-        "timestamp": now,
-        "metric": "icmp_packets_per_second",
-        "value": 12
-    }
-    await broadcaster.push_stat(stat)
-    return {"status": "ok", "stat": stat}
-
-@router.post("/api/test/ssh_stat")
-async def test_ssh_stat():
-    now = time.time()
-    stat = {
-        "timestamp": now,
-        "metric": "ssh_attempts_per_second",
-        "value": 25
-    }
-    await broadcaster.push_stat(stat)
-    return {"status": "ok", "stat": stat}
-
-@router.post("/api/test/ssh_baseline")
-async def test_ssh_baseline():
-    """Send baseline SSH traffic (low value for normal activity)"""
-    now = time.time()
-    stat = {
-        "timestamp": now,
-        "metric": "ssh_attempts_per_second",
-        "value": 3
-    }
-    await broadcaster.push_stat(stat)
-    return {"status": "ok", "stat": stat}
-
-@router.post("/api/test/arp_stat")
-async def test_arp_stat():
-    now = time.time()
-    stat = {
-        "timestamp": now,
-        "metric": "arp_spoofing_attempts_per_second",
-        "value": 8
-    }
-    await broadcaster.push_stat(stat)
-    return {"status": "ok", "stat": stat}
-
-@router.post("/api/test/arp_baseline")
-async def test_arp_baseline():
-    """Send baseline ARP traffic (low value for normal activity)"""
-    now = time.time()
-    stat = {
-        "timestamp": now,
-        "metric": "arp_spoofing_attempts_per_second",
-        "value": 1
-    }
-    await broadcaster.push_stat(stat)
-    return {"status": "ok", "stat": stat}
+@router.post("/api/test/icmp_alert")
+async def test_icmp_alert():
+    alert = await send_test_alert(
+        detector = "icmp_flood",
+        src = "192.168.1.55",
+        message = "[TEST] Simulate ICMP flooding alert",
+        rate = 1000
+    )
+    await send_test_stat("icmp_packets_per_second", 1000)
+    return alert
 
 @router.post("/api/test/arp_alert")
 async def test_arp_alert():
@@ -303,29 +250,6 @@ async def test_arp_alert():
     }
     await broadcaster.push_alert(alert_data)
     return {"status": "ok", "alert": alert_data}
-
-@router.post("/api/test/portscan_stat")
-async def test_portscan_stat():
-    now = time.time()
-    stat = {
-        "timestamp": now,
-        "metric": "portscan_attempts_per_second",
-        "value": 15
-    }
-    await broadcaster.push_stat(stat)
-    return {"status": "ok", "stat": stat}
-
-@router.post("/api/test/portscan_baseline")
-async def test_portscan_baseline():
-    """Send baseline port scan traffic (low value for normal activity)"""
-    now = time.time()
-    stat = {
-        "timestamp": now,
-        "metric": "portscan_attempts_per_second",
-        "value": 2
-    }
-    await broadcaster.push_stat(stat)
-    return {"status": "ok", "stat": stat}
 
 @router.post("/api/test/portscan_alert")
 async def test_portscan_alert():
@@ -365,3 +289,51 @@ async def test_portscan_udp():
     }
     await broadcaster.push_stat(stat)
     return {"status": "ok", "stat": stat, "type": "UDP Scan"}
+
+@router.post("/api/test/ssh_baseline")
+async def test_ssh_baseline():
+    """Send baseline SSH traffic (low value for normal activity)"""
+    now = time.time()
+    stat = {
+        "timestamp": now,
+        "metric": "ssh_attempts_per_second",
+        "value": 3
+    }
+    await broadcaster.push_stat(stat)
+    return {"status": "ok", "stat": stat}
+
+@router.post("/api/test/icmp_baseline")
+async def test_icmp_baseline():
+    """Send baseline ICMP traffic (low value for normal activity)"""
+    now = time.time()
+    stat = {
+        "timestamp": now,
+        "metric": "icmp_packets_per_second",
+        "value": 12.4 # normal baseline traffic
+    }
+    await broadcaster.push_stat(stat)
+    return {"status": "ok", "stat": stat}
+
+@router.post("/api/test/arp_baseline")
+async def test_arp_baseline():
+    """Send baseline ARP traffic (low value for normal activity)"""
+    now = time.time()
+    stat = {
+        "timestamp": now,
+        "metric": "arp_spoofing_attempts_per_second",
+        "value": 1
+    }
+    await broadcaster.push_stat(stat)
+    return {"status": "ok", "stat": stat}
+
+@router.post("/api/test/portscan_baseline")
+async def test_portscan_baseline():
+    """Send baseline port scan traffic (low value for normal activity)"""
+    now = time.time()
+    stat = {
+        "timestamp": now,
+        "metric": "portscan_attempts_per_second",
+        "value": 2
+    }
+    await broadcaster.push_stat(stat)
+    return {"status": "ok", "stat": stat}

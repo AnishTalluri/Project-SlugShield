@@ -6,93 +6,90 @@ from scapy.layers.inet6 import IPv6, ICMPv6EchoRequest, ICMPv6EchoReply
 from ..centralized_detector import centralized_detector
 from ..alerting import broadcaster
 
-
 class icmp_counter_detector(centralized_detector):
-    """
-    Improved ICMP flood detector.
-    - Tracks packets per *source*
-    - Reports accurate packets/sec to dashboard
-    - Triggers flood alerts based on packets/sec (not per-window count)
-    """
 
     def __init__(self, app_config, alert_manager):
-        super().__init__(app_config, alert_manager)
+        # Calls parent class-- centralized_detector
+        super().__init__(app_config, alert_manager) 
 
-        self.window_seconds = float(app_config.window_seconds)   # normally 60s
-        self.threshold = int(app_config.icmp_threshold_per_window)  # UI value
-        self.events = defaultdict(lambda: deque())               # timestamps per IP
-        self.last_stat_push = 0
+        self.size_of_sliding_time_window = float(app_config.window_seconds)   
+        self.threshold_packets_per_seconds_limit = int(app_config.icmp_threshold_per_window)  
+
+        # Timestamp history for recent alert section-- timestamps to ip address
+        self.events = defaultdict(lambda: deque())
+
+        # Stores timestamp of last time stat was pushed to dashboard
+        self.last_stat_pushed = 0
         self.alert_manager = alert_manager
 
-    # ---------------------------------------------------------
-    # Process incoming packets
-    # ---------------------------------------------------------
-    def analyze_packet(self, packet):
-
-        now = time.time()
-        src_ip = None
-
-        # IPv4 ICMP
+    def extract_ip_version_for_icmp_source_ip(self, packet):
         ip4 = packet.getlayer(IP)
         if ip4 is not None and ICMP in packet:
-            src_ip = ip4.src
+            return ip4.src
+            
+        ip6 = packet.getlayer(IPv6)
+        if ip6 is not None and (ICMPv6EchoRequest in packet or ICMPv6EchoReply in packet):
+            return ip6.src
+        
+        return None # Packet invalid
+    
+    def clean_old_entries(self, timestamps, current_time):
+        # Remove timestamps older than the configured sliding window
+        while timestamps and current_time - timestamps[0] > self.size_of_sliding_time_window:
+            timestamps.popleft()
 
-        else:
-            # IPv6 ICMP
-            ip6 = packet.getlayer(IPv6)
-            if ip6 is not None and (ICMPv6EchoRequest in packet or ICMPv6EchoReply in packet):
-                src_ip = ip6.src
+    def compute_packets_per_second(self, current_time):
+        total_packets = 0
 
-        if not src_ip:
-            return  # not ICMP
+        # gather total amount of packets within the last second
+        for timestamp_list in self.events.values():
+            for timestamp in timestamp_list:
+                if current_time - timestamp <= 1.0:
+                    total_packets += 1
 
-        # Record event
-        dq = self.events[src_ip]
-        dq.append(now)
+        return total_packets
 
-        # Sliding window cleanup
-        while dq and now - dq[0] > self.window_seconds:
-            dq.popleft()
+    def push_stats_once_per_second(self, packets_per_second, current_time):
+        # Push ICMP packets per second stats to WebSocket once per second
 
-        # ---------------------------------------------------------
-        # PACKETS PER SECOND (what the dashboard expects)
-        # ---------------------------------------------------------
-        total_packets_last_second = sum(
-            len([ts for ts in timestamps if now - ts <= 1.0])
-            for timestamps in self.events.values()
-        )
+        if current_time - self.last_stat_pushed < 1:
+            return # Not a second yet so do nothing
 
-        # ---------------------------------------------------------
-        # Send live stats once per second
-        # ---------------------------------------------------------
-        if now - self.last_stat_push >= 1:
-            stat = {
+        broadcaster.push_stat({
                 "metric": "icmp_packets_per_second",
-                "timestamp": now,
-                "value": total_packets_last_second,
-            }
-            broadcaster.push_stat(stat)
-            self.last_stat_push = now
+                "timestamp": current_time,
+                "value": packets_per_second,
+        })
+        self.last_stat_pushed = current_time
 
-        # ---------------------------------------------------------
-        # FLOOD ALERT (based on packets per SECOND, not per window)
-        # ---------------------------------------------------------
-        if total_packets_last_second >= self.threshold:
-
-            alert_data = {
-                "timestamp": now,
+    def handle_flood_alert(self, source_ip, packets_per_second, current_time):
+        alert_data = {
+                "timestamp": current_time,
                 "severity": "high",
                 "detector": "icmp_flood",
-                "src": src_ip,
-                "pps": total_packets_last_second,
-                "message": f"ICMP flood detected from {src_ip}: {total_packets_last_second} packets/sec"
-            }
+                "src": source_ip,
+                "pps": packets_per_second,
+                "message": f"ICMP flood detected from {source_ip}: {packets_per_second} packets/sec"
+        }
+        self.alert(alert_data) # Push to alerting.py
+        broadcaster.push_alert(alert_data)  # Push to dashboard websocket
 
-            # Push to SNS/Email system
-            self.alert(alert_data)
+    # The main function in this class that is utilized 
+    def analyze_packet(self, packet):
+        current_time = time.time()
+        source_ip = self.extract_ip_version_for_icmp_source_ip(packet)
 
-            # Push to dashboard websocket
-            broadcaster.push_alert(alert_data)
+        if not source_ip:
+            return # Not ICMP or not extractable 
+        
+        # Record timestamps
+        timestamps = self.events[source_ip]
+        timestamps.append(current_time)
 
-            # Clear offender's timestamps so alerts don't spam constantly
-            dq.clear()
+        self.clean_old_entries(timestamps, current_time)
+        packets_per_second = self.compute_packets_per_second(current_time) # Used to compare to threshold and what graph uses
+        self.push_stats_once_per_second(packets_per_second, current_time)
+
+        if packets_per_second >= self.threshold_packets_per_seconds_limit:
+            self.handle_flood_alert(source_ip, packets_per_second, current_time)
+            timestamps.clear() # Prevent alert spam

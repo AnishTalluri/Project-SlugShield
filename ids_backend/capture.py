@@ -1,46 +1,39 @@
-import socket
-import threading
-import struct
-from scapy.layers.inet import IP, ICMP, TCP
-from scapy.layers.inet6 import IPv6
-from scapy.all import Ether
-
+from scapy.all import sniff
 
 class PacketCapture:
 
     def __init__(self, app_config):
-        self.interface = app_config.interface
+        self.interface = app_config.interface # Network interface to listen on
         self.running = False
         self.detectors = []
 
+    # Add detector to distribute packets to 
     def add_detection(self, callback):
         self.detectors.append(callback)
 
+    # Process packets
+    def process_packet(self, packet):
+        for detector in self.detectors:
+            try:
+                detector(packet)
+            except Exception as e:
+                print(f"[Detector Error] {e}")
+
+    # Capture packets
     def start_sniff(self):
         self.running = True
+        print(f"[Sniffer] Listening on interface: {self.interface}")
 
-        # -------- RAW SOCKET (macOS-compatible) ----------
-        sock = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_IP)
-        sock.bind((self.interface, 0))
-        sock.setsockopt(socket.IPPROTO_IP, socket.IP_HDRINCL, 1)
-        sock.ioctl(0x80000069, 1)   # SIOCGIFFLAGS
-        sock.ioctl(0x40000069, 1)   # SIOCSIFFLAGS = PROMISC
+        try:
+            sniff(
+                iface=self.interface,
+                prn=self.process_packet,
+                store=False,
+            )
+        except Exception as e:
+            print(f"[Sniffer Error] {e}")
 
-        print(f"[RAW SNIFFER] Listening on {self.interface}")
-
-        while self.running:
-            packet = sock.recvfrom(65565)[0]
-
-            try:
-                # Parse IP packet
-                ip_pkt = IP(packet)
-
-                # Run detectors
-                for det in self.detectors:
-                    det(ip_pkt)
-
-            except Exception:
-                continue
-
+    # Stop sniffing for packets
     def stop_sniff(self):
         self.running = False
+        print("[Sniffer] Stopped.")

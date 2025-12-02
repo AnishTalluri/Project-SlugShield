@@ -21,8 +21,8 @@ How We Detect It:
 import time
 from collections import defaultdict
 from scapy.layers.l2 import ARP
-from .centralized_detector import centralized_detector
-from .config import thresholds
+from ..centralized_detector import centralized_detector
+from ..config import thresholds
 
 # arp_spoof_detector class here
 class arp_spoof_detector(centralized_detector):
