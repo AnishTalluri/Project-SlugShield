@@ -46,5 +46,5 @@ Privacy-first local IDS that analyzes simulated edge traffic (IoT/smart devices)
 ---
 
 ## Contributing
-- Branch: work off `arp-backend-integration` and open PRs.
-- Keep README concise; defer deep explanations to the docs.
+- Use feature branches and open PRs.
+- Keep this README lean; add details to `docs/`.
