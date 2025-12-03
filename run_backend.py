@@ -10,6 +10,7 @@ from ids_backend.capture import PacketCapture
 from ids_backend.detectors.icmp_flood import icmp_counter_detector
 from ids_backend.detectors.arp_detector import arp_spoof_detector
 from ids_backend.detectors.ssh_detector import ssh_detector
+from ids_backend.detectors.port_scan_detector import port_scan_detector
 from ids_backend.alerting import broadcaster   # GLOBAL broadcaster
 from ids_backend.api import router             # router only (NO app import)
 
@@ -60,6 +61,10 @@ def main():
     # ARP spoofing detector
     arp_detector = arp_spoof_detector(app_config, broadcaster)
     live_packet_sniffer.add_detection(arp_detector.analyze_packet)
+
+    # Port scan detector
+    portscan_detector = port_scan_detector(app_config, broadcaster)
+    live_packet_sniffer.add_detection(portscan_detector.analyze_packet)
 
     # SSH detector
     live_packet_sniffer.add_detection(ssh_detector)
