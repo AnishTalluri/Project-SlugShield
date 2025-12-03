@@ -1,7 +1,6 @@
-- ids_frontend(Frontend logic):
+- ids_frontend (Frontend logic):
     - src: Sources files of all components composed of the frontend
-        - app.jsx: Fetch data, listen to WebSocket updates, and renders dashboard layout(think of this
-        as the main page that will display the frontend)
+        - app.jsx: Fetch data, listen to WebSocket updates, and renders dashboard layout(think of this as the main page that will display the frontend)
 
         - main.jsx: Renders the App component into root HTML element
 
@@ -12,9 +11,9 @@
 
             - icmp_chart.jsx: renders live updating line chart to show icmp packets per second alongside a baseline for anomoly comparison
 
-            - arp_chart.jsx: renders live updating line chart to show possible arp packets(possible spoof) per second alongside a baseline for anomoly comparison
+            - arp_chart.jsx: renders live updating line chart to show ARP IP→MAC changes per second (possible spoofing) alongside a baseline for anomaly comparison; highlights alerts with detector name and timestamp
 
-            - portscan_chart.jsx: renders live updating line chart to show syn packets(both tcp and udp that can indicate port scanning) per second alongside a baseline for anomoly comparison
+            - portscan_chart.jsx: renders live updating line chart to show unique destination ports probed per source per second (port scanning) alongside a baseline for anomaly comparison; shows threshold crossings as alert markers
 
             - ssh_chart.jsx: renders live updating line chart to show ssh attempts per second alongside a baseline for anomoly comparison
 

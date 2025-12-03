@@ -13,8 +13,7 @@
     - simulate_icmp_flood.py: sends a range of normal traffic, then icmp flood simulation, then back
     to normal traffic
     - simulate_port_scan.py: sends a range of normal traffic, then tcp port scan followed by udp port scan, then back to normal traffic
-    - simulate_ssh_detections.py: sends a range of normal traffic, then ssh bruteforce detection, then
-    back to normal traffic
+    - simulate_ssh_detections.py: sends a range of normal traffic, then ssh bruteforce detection, then back to normal traffic
 
 - config.yaml: user-editable configuration-- you change threshold values and such here 
 
@@ -29,5 +28,3 @@
     - PyYAML: reading structured .yaml configs
 
 - run_backend.py: entry point for IDS backend as well as starting FastAPI server and network packet detector within same event loop-- ensures real time updates flow to frontend via shared broadcaster
-
-- backend_render.py: file to keep backend running online

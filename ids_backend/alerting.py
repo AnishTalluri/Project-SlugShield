@@ -102,6 +102,34 @@ class alert_broadcaster:
         )
         send_email_notification(subject, message, current_email["address"])
 
+    def send_arp_email(self, alert: Dict[str, Any]):
+        # Concise ARP spoofing email (user-friendly summary + context)
+        subject = "ARP Spoofing Detected"
+        message = (
+            "ARP Spoofing Detection (Simple Explanation)\n"
+            "\n"
+            "ARP maps IP addresses to device MAC addresses on your local network.\n"
+            "Normally, one IP keeps the same MAC. If that mapping changes many times\n"
+            "in a short period, it may indicate someone is impersonating devices to\n"
+            "intercept traffic (man-in-the-middle).\n"
+            "\n"
+            "In simple terms:\n"
+            "• Watches IP→MAC changes over time\n"
+            "• Flags unusually frequent changes\n"
+            "• Warns if someone may be spoofing identities\n"
+            "\n"
+            "--------------------------------------------------\n"
+            "Alert Details:\n"
+            f"• IP: {alert.get('ip', 'Unknown')}\n"
+            f"• Current MAC: {alert.get('mac', 'Unknown')}\n"
+            f"• Changes: {alert.get('mac_changes', 'N/A')} in {alert.get('window_seconds', 'N/A')}s\n"
+            f"• Known MACs: {alert.get('known_macs', [])}\n"
+            f"• Message: {alert.get('message', 'N/A')}\n"
+            f"• Timestamp: {time.ctime(alert.get('timestamp', time.time()))}\n"
+            "--------------------------------------------------\n"
+        )
+        send_email_notification(subject, message, current_email["address"])
+
     async def send_email(self, alert: Dict[str, Any]):
         if not current_email["address"]:
             return # Do nothing if email has not been set
@@ -111,6 +139,8 @@ class alert_broadcaster:
             self.send_ssh_email(alert)
         elif detector == "icmp_flood":
             self.send_icmp_email(alert)
+        elif detector == "arp_spoof":
+            self.send_arp_email(alert)
 
     # Push alert
     async def push_alert(self, alert: Dict[str, Any]):

@@ -1,20 +1,13 @@
 """
 ARP Spoofing Detector
 
-This detector identifies potential ARP spoofing attacks (Man-in-the-Middle attacks).
+Detects ARP spoofing by tracking changes in IP→MAC mappings over a sliding
+time window and alerting when changes exceed a configurable threshold.
 
-How ARP Spoofing Works:
-- An attacker sends fake ARP replies to a victim
-- These fake replies say "Hey, I'm the router/server you want to talk to, send packets to MY MAC address"
-- If successful, all traffic between victim and destination goes through the attacker
-- The attacker can then sniff, modify, or drop the traffic
-
-How We Detect It:
-- We track the mapping between IP addresses and MAC addresses
-- In a normal network, one IP address should consistently map to ONE MAC address
-- If we see the SAME IP address suddenly associated with DIFFERENT MAC addresses,
-  that's suspicious and likely an ARP spoofing attempt
-- We use a threshold to avoid false positives from legitimate MAC changes (like DHCP renewals)
+Rationale (compact):
+- Normal networks keep stable IP→MAC associations.
+- Repeated changes for the same IP in a short window are suspicious.
+- Thresholding avoids false positives (e.g., device swap, DHCP renewals).
 """
 
 # Imports here
@@ -27,18 +20,18 @@ from ..config import thresholds
 # arp_spoof_detector class here
 class arp_spoof_detector(centralized_detector):
     def __init__(self, app_config, alert_manager):
-        # Initialize parent class (needed for alert functionality)
+        # Base setup: alerting, config, and ARP state
         super().__init__(app_config, alert_manager)
         
-        # Configuration from config.yaml
-        self.window = app_config.window_seconds  # Time window to track changes
+        # Sliding window duration (seconds)
+        self.window = app_config.window_seconds
         
-        # Data structures to track ARP behavior
-        self.ip_mac_map = defaultdict(set)  # IP -> set of MAC addresses seen
-        self.mac_change_times = defaultdict(list)  # IP -> list of timestamps when MAC changed
+        # Track per-IP MACs and MAC-change timestamps
+        self.ip_mac_map = defaultdict(set)           # IP -> set of seen MACs
+        self.mac_change_times = defaultdict(list)     # IP -> [timestamps]
 
     def analyze_packet(self, packet):
-        # Step 1: Check if the packet is ARP
+        # 1) Accept only ARP packets
         if ARP not in packet:
             return
         
@@ -46,56 +39,40 @@ class arp_spoof_detector(centralized_detector):
         if arp_layer is None:
             return
         
-        # Step 2: Extract sender's IP and MAC from ARP packet 
-        ip = arp_layer.psrc  # Source IP address
-        mac = arp_layer.hwsrc  # Source MAC address
+        # 2) Extract sender IP/MAC
+        ip = arp_layer.psrc
+        mac = arp_layer.hwsrc
 
-        # Step 3: Detect MAC address changes (potential spoofing)
-        known_macs = self.ip_mac_map[ip]  # Get the set of MACs seen for this IP
+        # 3) Detect MAC changes vs. previously seen MACs for this IP
+        known_macs = self.ip_mac_map[ip]
 
-        # Check if this IP has been seen before (set is not empty)
-        if len(known_macs) > 0:
-            # IP has been seen before --> check if the MAC is different
-            if mac not in known_macs:
-                # MAC has changed --> Could be sus --> record the timestamp
-                current_time = time.time()
-                self.mac_change_times[ip].append(current_time)
+        # If IP seen before and MAC is new, record change timestamp
+        if len(known_macs) > 0 and mac not in known_macs:
+            self.mac_change_times[ip].append(time.time())
         
-        # Always add this MAC to our records (whether first time or change)
+        # Always record the current MAC
         known_macs.add(mac)
 
-        # Step 4: Implement sliding window --> remove all the old (irrelevant) MAC-change timestamps
+        # 4) Sliding window: keep only recent change timestamps
         now = time.time()
-        change_times = self.mac_change_times[ip]  # Get list of timestamps for this IP
-        
-        # Create a new list to store only recent timestamps (within the window)
-        recent_changes = []
-        for timestamp in change_times:
-            # Check if this timestamp is within our time window
-            if (now - timestamp) <= self.window:
-                recent_changes.append(timestamp)  # Keep it
+        self.mac_change_times[ip] = [t for t in self.mac_change_times[ip] if (now - t) <= self.window]
 
-            # If not within window --> ignore it (it gets filtered out)
-        
-        # Update records with only the recent changes
-        self.mac_change_times[ip] = recent_changes
+        # 5) Alert if change count crosses threshold
+        count = len(self.mac_change_times[ip])
 
-        # Step 5: Check if the number of MAC changes exceeds our threshold
-        count = len(self.mac_change_times[ip])  # Number of recent MAC changes for this IP
-
-        # Get dynamic threshold (can be updated via API)
+        # Threshold may be updated dynamically via API
         threshold = thresholds.get("arp", 3)
 
-        # If count exceeds threshold --> ARP spoofing attack detected
+        # Trigger alert and include compact context payload
         if count >= threshold:
             self.alert({
                 'detector': 'arp_spoof',  # Detector name
-                'ip': ip,  # IP address being spoofed
-                'mac': mac,  # Current MAC address
-                'known_macs': list(known_macs),  # All MAC addresses seen for this IP
-                'mac_changes': count,  # Number of MAC changes detected
-                'window_seconds': self.window,  # Time window for these changes
-                'threshold': threshold,  # Current threshold
+                'ip': ip,
+                'mac': mac,
+                'known_macs': list(known_macs),
+                'mac_changes': count,
+                'window_seconds': self.window,
+                'threshold': threshold,
                 'message': (
                     f'ARP spoofing detected! IP {ip} has been associated with '
                     f'{count} different MAC addresses in {self.window} seconds (threshold: {threshold}). '

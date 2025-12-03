@@ -2,7 +2,10 @@
     - config.py: Loader and manager of configuration for project-- reads config.yaml and merge with defaults
     
     - dectectors: Directory that will contain files that detect the icmp flood, arp spoofing, etc. 
-        - icmp_flood.py: ICMP flood detection that utilizes sliding windows-- if the threshold value for number of ICMP packets is met, then trigger alert 
+        - icmp_flood.py: ICMP flood detection that utilizes sliding windows-- if the threshold value for number of ICMP packets is met, then trigger alert
+        - arp_detector.py: ARP spoofing detection that tracks IP→MAC changes within a sliding window; if the number of MAC changes for a single IP exceeds the threshold, trigger alert
+        - ssh_detector.py: SSH brute-force detection that counts TCP SYNs to port 22 within a sliding window; if attempts from a source exceed the threshold, trigger alert
+        - port_scan_detector.py: Port scanning detection that monitors distinct destination ports per source within a sliding window; if unique ports probed exceed the threshold, trigger alert
 
     - capture.py: Listen on chosen interface then captures the packets using scapy and gives to detectors to analyze
 

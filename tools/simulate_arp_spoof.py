@@ -1,3 +1,10 @@
+"""
+ARP Spoofing Simulator (API-driven)
+
+Sends test events to the backend API to emulate baseline ARP traffic, a burst
+of ARP spoof-like changes, then a return to normal. Useful for frontend/demo.
+"""
+
 import time
 import requests
 
@@ -11,6 +18,7 @@ def send(endpoint):
 
 
 def baseline():
+    # Low, steady “normal” ARP activity
     print("\n[ARP BASELINE] Normal ARP activity...")
     for i in range(8):
         send("arp_baseline")  # value = 1
@@ -19,6 +27,7 @@ def baseline():
 
 
 def arp_attack():
+    # Simulate rapid ARP changes to trigger detector thresholds
     print("\n[ARP SPOOFING ATTACK] Simulating ARP spoofing...")
     for i in range(12):
         send("arp_stat")    # pushes value = 8
@@ -29,6 +38,7 @@ def arp_attack():
 
 
 def back_to_normal():
+    # Return to baseline to demonstrate recovery
     print("\n[ARP BASELINE] Returning to normal traffic...")
     for i in range(8):
         send("arp_baseline")

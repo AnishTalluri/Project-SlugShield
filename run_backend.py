@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from ids_backend.config import load_config_file
 from ids_backend.capture import PacketCapture
 from ids_backend.detectors.icmp_flood import icmp_counter_detector
+from ids_backend.detectors.arp_detector import arp_spoof_detector
 from ids_backend.detectors.ssh_detector import ssh_detector
 from ids_backend.alerting import broadcaster   # GLOBAL broadcaster
 from ids_backend.api import router             # router only (NO app import)
@@ -55,6 +56,10 @@ def main():
     # ICMP detector using the same broadcaster
     icmp_detector = icmp_counter_detector(app_config, broadcaster)
     live_packet_sniffer.add_detection(icmp_detector.analyze_packet)
+
+    # ARP spoofing detector
+    arp_detector = arp_spoof_detector(app_config, broadcaster)
+    live_packet_sniffer.add_detection(arp_detector.analyze_packet)
 
     # SSH detector
     live_packet_sniffer.add_detection(ssh_detector)

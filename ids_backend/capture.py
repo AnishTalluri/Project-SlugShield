@@ -3,15 +3,16 @@ from scapy.all import sniff
 class PacketCapture:
 
     def __init__(self, app_config):
-        self.interface = app_config.interface # Network interface to listen on
+        # Interface and detectors registry
+        self.interface = app_config.interface  # Network interface to listen on
         self.running = False
         self.detectors = []
 
-    # Add detector to distribute packets to 
+    # Add detector callback (called for each packet)
     def add_detection(self, callback):
         self.detectors.append(callback)
 
-    # Process packets
+    # Dispatch packet to all registered detectors
     def process_packet(self, packet):
         for detector in self.detectors:
             try:
@@ -19,7 +20,7 @@ class PacketCapture:
             except Exception as e:
                 print(f"[Detector Error] {e}")
 
-    # Capture packets
+    # Capture packets (no BPF filter here to allow ARP + others)
     def start_sniff(self):
         self.running = True
         print(f"[Sniffer] Listening on interface: {self.interface}")
