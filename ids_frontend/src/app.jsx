@@ -40,6 +40,7 @@ export default function App() {
 
     // Calculate total packets analyzed today (example metric)
     const totalPackets = icmpStats.reduce((sum, stat) => sum + (stat.value || 0), 0);
+
     const packetsDisplay = totalPackets > 1000000 
         ? `${(totalPackets / 1000000).toFixed(1)}M` 
         : totalPackets > 1000 
@@ -249,7 +250,6 @@ export default function App() {
                     <div className="status-value">
                         {last_checked || 'Loading...'}
                     </div>
-                    <div className="status-label">Auto-refresh: 5s</div>
                 </div>
                 <div className="status-card">
                     <h3>Packets Analyzed</h3>
