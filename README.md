@@ -1,10 +1,10 @@
 # Project-SlugShield
-> Intrusion Detector — a lightweight, on-device IDS. It watches local IoT/smart-device traffic and flags anomalies. Runs fully offline for privacy, with encrypted alerts, hashed logs, and a live web dashboard.
+> Lightweight, on-device Intrusion Detection. It watches local IoT/smart-device traffic and flags anomalies. Runs fully offline for privacy, with encrypted alerts, hashed logs, and a live web dashboard.
 
 ---
 
 ## Overview
-Privacy-first local IDS that analyzes simulated edge traffic (IoT/smart devices). No cloud. Sends encrypted alert summaries to the dashboard; never raw packet data.
+Privacy-first local IDS that analyzes simulated edge traffic (IoT/smart devices). No cloud. Sends encrypted alert summaries to the dashboard; never raw packet data. Detection relies on well-defined heuristics and thresholds.
 
 ---
 
