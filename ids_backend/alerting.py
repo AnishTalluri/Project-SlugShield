@@ -130,6 +130,60 @@ class alert_broadcaster:
         )
         send_email_notification(subject, message, current_email["address"])
 
+    def send_port_email(self, alert: Dict[str, Any]):
+        # Concise port scanning email (user-friendly summary + context)
+        subject = "Port Scanning Activity Detected"
+
+        src_ip = alert.get("src_ip") or alert.get("src", "Unknown")
+        reasons = alert.get("summary_reasons", [])
+        fast = alert.get("fast_metrics", {}) or {}
+        slow = alert.get("slow_metrics", {}) or {}
+
+        message = (
+            "Port Scan Detection (Simple Explanation)\n"
+            "\n"
+            "A port scan happens when someone quickly checks many ports on your device or\n"
+            "network to see which services are open. Attackers often do this before trying\n"
+            "to break in, because it tells them which doors are unlocked.\n"
+            "\n"
+            "Your port scan detector watches how many different ports and hosts a single\n"
+            "IP address contacts in a short amount of time. If that activity is unusually\n"
+            "broad or aggressive, it warns you.\n"
+            "\n"
+            "In simple terms:\n"
+            "• It tracks how many unique ports are probed\n"
+            "• It watches how many different hosts are contacted\n"
+            "• It looks at TCP SYN vs SYN-ACK patterns (half-open scans)\n"
+            "• It warns you if behavior looks like reconnaissance\n"
+            "\n"
+            "--------------------------------------------------\n"
+            "Alert Details:\n"
+            f"• Source IP: {src_ip}\n"
+            f"• Reasons: {', '.join(reasons) if reasons else 'N/A'}\n"
+            "\n"
+            f"Fast Window ({alert.get('fast_window_seconds', 'N/A')}s):\n"
+            f"  - Unique Ports: {fast.get('unique_ports', 'N/A')}\n"
+            f"  - Unique Hosts: {fast.get('unique_hosts', 'N/A')}\n"
+            f"  - SYN: {fast.get('syn', 'N/A')}, SYN-ACK: {fast.get('synack', 'N/A')}\n"
+            f"  - SYN/SYN-ACK Ratio: {fast.get('syn_to_synack', 'N/A')}\n"
+            f"  - UDP Packets: {fast.get('udp', 'N/A')}\n"
+            "\n"
+            f"Slow Window ({alert.get('slow_window_seconds', 'N/A')}s):\n"
+            f"  - Unique Ports: {slow.get('unique_ports', 'N/A')}\n"
+            f"  - Unique Hosts: {slow.get('unique_hosts', 'N/A')}\n"
+            f"  - SYN: {slow.get('syn', 'N/A')}, SYN-ACK: {slow.get('synack', 'N/A')}\n"
+            f"  - SYN/SYN-ACK Ratio: {slow.get('syn_to_synack', 'N/A')}\n"
+            f"  - UDP Packets: {slow.get('udp', 'N/A')}\n"
+            f"  - ICMP Unreachables: {slow.get('icmp_unreach', 'N/A')}\n"
+            f"  - UDP/ICMP Ratio: {slow.get('udp_icmp_ratio', 'N/A')}\n"
+            "\n"
+            f"• Message: {alert.get('message', 'N/A')}\n"
+            f"• Timestamp: {time.ctime(alert.get('timestamp', time.time()))}\n"
+            "--------------------------------------------------\n"
+        )
+
+        send_email_notification(subject, message, current_email["address"])
+
     async def send_email(self, alert: Dict[str, Any]):
         if not current_email["address"]:
             return # Do nothing if email has not been set
@@ -141,6 +195,8 @@ class alert_broadcaster:
             self.send_icmp_email(alert)
         elif detector == "arp_spoof":
             self.send_arp_email(alert)
+        elif detector == "port_scan":
+            self.send_port_email(alert)
 
     # Push alert
     async def push_alert(self, alert: Dict[str, Any]):
@@ -173,3 +229,4 @@ class alert_broadcaster:
     
 # Shared broadcaster instance -> don't remove this, central hub for alerts and stats
 broadcaster = alert_broadcaster()
+
