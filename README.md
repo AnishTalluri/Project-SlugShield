@@ -1,5 +1,5 @@
 # Project-SlugShield
-> Edge AI Intrusion Detector — a lightweight, on-device IDS. It watches local IoT/smart-device traffic and flags anomalies. Runs fully offline for privacy, with encrypted alerts, hashed logs, and a live web dashboard.
+> Intrusion Detector — a lightweight, on-device IDS. It watches local IoT/smart-device traffic and flags anomalies. Runs fully offline for privacy, with encrypted alerts, hashed logs, and a live web dashboard.
 
 ---
 
