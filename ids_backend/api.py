@@ -259,12 +259,40 @@ async def test_portscan_alert():
         "severity": "high",
         "detector": "port_scan",
         "src": "10.0.2.100",
-        "unique_ports": 25,
-        "scan_type": "TCP SYN Scan",
-        "message": "[TEST] Port scan detected! Host 10.0.2.100 probed 25 unique ports"
+
+
+        "summary_reasons": [
+            "FAST_TCP: 25 unique ports, SYN:SYN-ACK=10.0",
+            "FAST_HOST_SWEEP: 5 unique hosts, SYNs=120, SYN:SYN-ACK=10.0",
+        ],
+        "fast_window_seconds": 10,
+        "slow_window_seconds": 60,
+
+        "fast_metrics": {
+            "unique_ports": 25,
+            "unique_hosts": 5,
+            "syn": 120,
+            "synack": 12,
+            "syn_to_synack": 10.0,
+            "udp": 0,
+        },
+        "slow_metrics": {
+            "unique_ports": 30,
+            "unique_hosts": 6,
+            "syn": 150.0,
+            "synack": 15.0,
+            "syn_to_synack": 10.0,
+            "udp": 0.0,
+            "icmp_unreach": 0.0,
+            "udp_icmp_ratio": None,
+        },
+
+        "message": "[TEST] Port scan detected! Host 10.0.2.100 probed 25 unique ports",
     }
+
     await broadcaster.push_alert(alert_data)
     return {"status": "ok", "alert": alert_data}
+
 
 @router.post("/api/test/portscan_tcp")
 async def test_portscan_tcp():
