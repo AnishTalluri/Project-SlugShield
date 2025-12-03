@@ -23,10 +23,10 @@
 
             - ThresholdPanel.jsx: Allows for threshold adjustments for the detectors 
 
-        - services: 
+        - services:
             - websocket.js: Keeps persistent WebSocket connection to receive real time alert and stat updates from backend
 
-            - api.js: Contains helper functions to fetch alerts and statistics via REST calls from FastAPI backend(one time fetch)
+            - api.js: Contains helper functions to fetch alerts and statistics via REST calls from FastAPI backend (one time fetch)
 
     - index.html: Main HTML file that hosts React app-- provides root container where dashboard is rendered
 
